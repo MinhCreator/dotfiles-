@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+clear
+
 dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 files=$dir/files
 wallpaper=$dir/assets/wallpaper.jpg
