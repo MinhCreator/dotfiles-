@@ -8,6 +8,9 @@ files=$dir/files
 wallpaper=$dir/assets/wallpaper.jpg
 old_home=/home/bnsplit
 
+stamp=$(date +%Y%m%d-%H%M%S)
+backup=$HOME/.local/share/bnsplit-backup/$stamp
+
 pacman_pkgs=(
   hyprland
   hypridle
@@ -153,10 +156,24 @@ if [[ $HOME != "$old_home" ]]; then
 fi
 
 # --- deploy ---
-# -E keeps the exec bit; --no-perms and -O stop rsync from applying the staging
-# dir's mode and mtime to $HOME, /, /usr, etc.
-[[ -d $tmp/home ]] && rsync -rltEO --no-perms -- "$tmp/home/" "$HOME/"
-[[ -d $tmp/root ]] && sudo rsync -rltEO --no-perms --chown=root:root -- "$tmp/root/" /
+mkdir -p -- "$backup"
+
+if [[ -d $tmp/home ]]; then
+  rsync -rltEOc --no-perms \
+    --backup --backup-dir="$backup/home" \
+    -- "$tmp/home/" "$HOME/"
+fi
+
+if [[ -d $tmp/root ]]; then
+  sudo rsync -rltEOc --no-perms --chown=root:root \
+    --backup --backup-dir="$backup/root" \
+    -- "$tmp/root/" /
+fi
+
+# root-made backups live in $HOME: hand them back to the user
+sudo chown -R -- "$(id -u):$(id -g)" "$backup"
+find "$backup" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+rmdir -- "$backup" 2>/dev/null || true
 
 fc-cache -f
 
@@ -176,4 +193,5 @@ else
   echo "skipping wallpaper: need $wallpaper and an executable select-wallpaper" >&2
 fi
 
+[[ -d $backup ]] && echo "backup: $backup"
 echo "done"
