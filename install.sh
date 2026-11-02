@@ -178,6 +178,7 @@ rmdir -- "$backup" 2>/dev/null || true
 fc-cache -f
 
 # --- greetd ---
+sudo systemctl disable display-manager.service
 sudo systemctl enable greetd.service
 
 # --- libtranslate ---
