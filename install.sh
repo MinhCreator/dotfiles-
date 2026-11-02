@@ -245,3 +245,9 @@ if ((backed_up > 0)); then
 else
   echo "No existing files were overwritten, so no backup was created."
 fi
+
+printf '\n%sRestart recommended%s to start greetd and load the new configuration.\n' "$c_yellow" "$c_off"
+read -rp "Reboot now? [y/N] " answer
+if [[ $answer == [yY]* ]]; then
+  systemctl reboot
+fi
