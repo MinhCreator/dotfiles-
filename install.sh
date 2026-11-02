@@ -61,6 +61,7 @@ pacman_pkgs=(
   python-gobject
   python-opencv
   python-psutil
+  rsync
   gtk3
   gtk4
   gtk-update-icon-cache
