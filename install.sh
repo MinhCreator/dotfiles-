@@ -244,8 +244,12 @@ python -m venv "$HOME/.local/bin/libretranslate_env"
 step "Applying wallpaper"
 select_wallpaper=$HOME/.local/share/bnsplit/scripts/select-wallpaper
 if [[ -f $wallpaper && -x $select_wallpaper ]]; then
+  awww-daemon >/dev/null 2>&1 &
+  daemon_pid=$!
+  sleep 1
   "$select_wallpaper" "$wallpaper" >/dev/null 2>&1 ||
     warn "select-wallpaper failed, run it again from inside the session"
+  kill "$daemon_pid" 2>/dev/null || true
 else
   warn "skipping wallpaper: need $wallpaper and an executable select-wallpaper"
 fi
