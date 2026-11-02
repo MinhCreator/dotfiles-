@@ -104,6 +104,7 @@ pacman_pkgs=(
   gnome-settings-daemon
   geoclue
   greetd
+  acl
   base-devel
   git
 )
@@ -211,11 +212,23 @@ if ((backed_up == 0)); then
   rmdir -- "$backup" 2>/dev/null || true
 fi
 
+step "Preparing greeter directories"
+if [[ -f /etc/tmpfiles.d/bn-greetd.conf ]]; then
+  sudo systemd-tmpfiles --create /etc/tmpfiles.d/bn-greetd.conf
+fi
+
 step "Refreshing font cache"
 fc-cache -f
 
 # --- greetd ---
 step "Switching display manager to greetd"
+if id greeter >/dev/null 2>&1 && [[ -d $HOME/.config/quickshell ]]; then
+  info "granting greeter access to the quickshell config"
+  sudo setfacl -m u:greeter:x "$HOME"
+  sudo setfacl -R -m u:greeter:rwX "$HOME/.config/quickshell"
+  find "$HOME/.config/quickshell" -type d \
+    -exec sudo setfacl -m d:u:greeter:rwX {} +
+fi
 if systemctl is-enabled --quiet display-manager.service 2>/dev/null; then
   info "disabling current display manager"
   sudo systemctl disable display-manager.service

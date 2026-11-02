@@ -4,6 +4,7 @@
 # Quickshell
 ~/.config/quickshell/
 /etc/greetd/config.toml
+/etc/tmpfiles.d/bn-greetd.conf
 
 # Bins
 ~/.local/bin/argospm
