@@ -188,11 +188,11 @@ python -m venv "$HOME/.local/bin/libretranslate_env"
 # --- wallpaper ---
 select_wallpaper=$HOME/.local/share/bnsplit/scripts/select-wallpaper
 if [[ -f $wallpaper && -x $select_wallpaper ]]; then
-  "$select_wallpaper" "$wallpaper" ||
+  "$select_wallpaper" "$wallpaper" >/dev/null 2>&1 ||
     echo "warning: select-wallpaper failed, run it again from inside the session" >&2
 else
   echo "skipping wallpaper: need $wallpaper and an executable select-wallpaper" >&2
 fi
 
 [[ -d $backup ]] && echo "backup: $backup"
-echo "done"
+echo -e "\nAll Done !!!"
