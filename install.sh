@@ -138,7 +138,7 @@ fi
 sudo -v
 
 # --- packages ---
-sudo pacman -Syy
+sudo pacman -Sy
 ((${#pacman_pkgs[@]})) && sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
 ((${#aur_pkgs[@]})) && yay -S --needed --noconfirm "${aur_pkgs[@]}"
 
