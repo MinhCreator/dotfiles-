@@ -1,0 +1,7 @@
+/* Gnome Clocks */
+.clocks-standalone-label {
+  font-size: 10em;
+  font-weight: 700;
+  font-family: "Open Runde";
+}
+@import 'colors.css';

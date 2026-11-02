@@ -1,0 +1,23 @@
+# palette = 0={{var.surface_overlay}}
+palette = 0={{var.surface_base}}
+palette = 1={{col.11.hex}}
+palette = 2={{col.14.hex}}
+palette = 3={{col.13.hex}}
+palette = 4={{col.6.hex}}
+palette = 5={{col.9.hex}}
+palette = 6={{col.11.hex}}
+palette = 7={{col.15.hex}}
+palette = 8={{var.term_bright_black}}
+palette = 9={{col.11.hex}}
+palette = 10={{col.14.hex}}
+palette = 11={{col.13.hex}}
+palette = 12={{col.6.hex}}
+palette = 13={{col.9.hex}}
+palette = 14={{col.11.hex}}
+palette = 15={{col.15.hex}}
+background = {{var.surface_base}}
+foreground = {{col.15.hex}}
+cursor-color = {{col.15.hex}}
+cursor-text = {{col.12.hex}}
+selection-background = {{col.9.hex}}
+selection-foreground = {{col.5.hex}}

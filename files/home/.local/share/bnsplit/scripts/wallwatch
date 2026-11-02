@@ -1,0 +1,354 @@
+#!/usr/bin/env python3
+
+import os
+import json
+import time
+import logging
+import argparse
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+from datetime import datetime
+from PIL import Image, ImageOps
+from watchdog.observers import Observer
+from watchdog.events import (
+    FileSystemEventHandler,
+    FileCreatedEvent,
+    FileDeletedEvent,
+    FileMovedEvent,
+)
+
+# Optional JPEG XL support through Pillow plugin (registers itself on import)
+try:
+    import pillow_jxl  # noqa: F401
+
+    JXL_PLUGIN = True
+except ImportError:
+    JXL_PLUGIN = False
+
+# Configuration
+WALLPAPERS_DIR = Path.home() / "Pictures" / "Wallpapers"
+CACHE_DIR = Path.home() / ".cache" / "bnsplit" / "wallpaper-thumbnails"
+STATE_DIR = Path.home() / ".local" / "state" / "bnsplit"
+JSON_FILE = STATE_DIR / "wallpapers.json"
+
+# Supported image extensions
+IMAGE_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".jxl",
+    ".png",
+    ".gif",
+    ".webp",
+    ".bmp",
+    ".svg",
+    ".avif",
+    ".tiff",
+    ".tga",
+    ".pnm",
+    ".farbfeld",
+}
+
+# Thumbnail size (16:9 aspect ratio)
+THUMBNAIL_WIDTH = 512
+THUMBNAIL_HEIGHT = int((THUMBNAIL_WIDTH / 16) * 9)
+THUMBNAIL_SIZE = (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()],
+)
+logger = logging.getLogger(__name__)
+
+
+class WallpaperEventHandler(FileSystemEventHandler):
+    def __init__(self, monitor):
+        self.monitor = monitor
+        self.debounce_time = 0.5  # seconds
+        self.last_event_time = 0
+        self.pending_changes = False
+
+    def on_any_event(self, event):
+        # Ignore events on the JSON file itself
+        if hasattr(event, "dest_path") and str(JSON_FILE) in event.dest_path:
+            return
+        if hasattr(event, "src_path") and str(JSON_FILE) in event.src_path:
+            return
+
+        # Check if this is an event we care about
+        if isinstance(event, (FileCreatedEvent, FileDeletedEvent, FileMovedEvent)) and (
+            event.is_directory
+            or (
+                hasattr(event, "src_path")
+                and Path(event.src_path).suffix.lower() in IMAGE_EXTENSIONS
+            )
+            or (
+                hasattr(event, "dest_path")
+                and Path(event.dest_path).suffix.lower() in IMAGE_EXTENSIONS
+            )
+        ):
+
+            current_time = time.time()
+            if (
+                current_time - self.last_event_time > self.debounce_time
+                and self.pending_changes
+            ):
+                # Process pending changes if debounce time has passed
+                self.monitor.process_changes()
+                self.pending_changes = False
+
+            self.last_event_time = current_time
+            self.pending_changes = True
+
+            # Set a timer to process changes after debounce time
+            import threading
+
+            timer = threading.Timer(self.debounce_time + 0.1, self.process_debounced)
+            timer.start()
+
+    def process_debounced(self):
+        if (
+            self.pending_changes
+            and time.time() - self.last_event_time >= self.debounce_time
+        ):
+            self.monitor.process_changes()
+            self.pending_changes = False
+
+
+class WallpaperMonitor:
+    def __init__(self):
+        # Create directories if they don't exist
+        WALLPAPERS_DIR.mkdir(parents=True, exist_ok=True)
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+
+        self.observer = Observer()
+        self.event_handler = WallpaperEventHandler(self)
+
+        # Start monitoring both directories
+        self.observer.schedule(self.event_handler, str(WALLPAPERS_DIR), recursive=False)
+        self.observer.schedule(self.event_handler, str(CACHE_DIR), recursive=False)
+
+        # Initial sync
+        self.process_changes()
+
+    def start(self):
+        self.observer.start()
+        logger.info("Started monitoring wallpaper directory and cache")
+        try:
+            while self.observer.is_alive():
+                self.observer.join(1)
+        except KeyboardInterrupt:
+            self.observer.stop()
+        self.observer.join()
+
+    def stop(self):
+        self.observer.stop()
+        self.observer.join()
+
+    def process_changes(self):
+        """Process all changes to wallpapers and cache"""
+        try:
+            # Get current state of files
+            wallpaper_files = self.get_wallpaper_files()
+            cache_files = self.get_cache_files()
+
+            # Remove orphaned thumbnails
+            self.clean_orphaned_thumbnails(wallpaper_files, cache_files)
+
+            # Clean invalid cache files
+            self.clean_invalid_cache_files()
+
+            # Create missing thumbnails
+            self.create_missing_thumbnails(wallpaper_files, cache_files)
+
+            # Update JSON file
+            self.update_json_file(wallpaper_files)
+
+            logger.info("Processing completed successfully")
+        except Exception as e:
+            logger.error(f"Error processing changes: {e}")
+
+    def get_wallpaper_files(self):
+        """Get all valid image files in the wallpaper directory"""
+        files = []
+        for ext in IMAGE_EXTENSIONS:
+            files.extend(WALLPAPERS_DIR.glob(f"*{ext}"))
+            files.extend(WALLPAPERS_DIR.glob(f"*{ext.upper()}"))
+
+        return {f.stem: f for f in files if f.is_file()}
+
+    def get_cache_files(self):
+        """Get all png files in the cache directory"""
+        return {f.stem: f for f in CACHE_DIR.glob("*.png") if f.is_file()}
+
+    def clean_orphaned_thumbnails(self, wallpaper_files, cache_files):
+        """Remove thumbnails that don't have a corresponding wallpaper"""
+        for stem in set(cache_files.keys()) - set(wallpaper_files.keys()):
+            cache_file = cache_files[stem]
+            try:
+                cache_file.unlink()
+                logger.info(f"Removed orphaned thumbnail: {cache_file.name}")
+            except Exception as e:
+                logger.error(
+                    f"Error removing orphaned thumbnail {cache_file.name}: {e}"
+                )
+
+    def clean_invalid_cache_files(self):
+        """Remove any non-PNG files from the cache directory"""
+        for file in CACHE_DIR.iterdir():
+            if file.is_file() and file.suffix.lower() != ".png":
+                try:
+                    file.unlink()
+                    logger.info(f"Removed invalid cache file: {file.name}")
+                except Exception as e:
+                    logger.error(f"Error removing invalid cache file {file.name}: {e}")
+
+    def create_missing_thumbnails(self, wallpaper_files, cache_files):
+        """Create thumbnails for wallpapers that don't have one or need updating"""
+        for stem, wallpaper_file in wallpaper_files.items():
+            cache_file = CACHE_DIR / f"{stem}.png"
+
+            # Check if thumbnail needs to be created or updated
+            if (
+                stem not in cache_files
+                or not cache_file.exists()
+                or wallpaper_file.stat().st_mtime > cache_file.stat().st_mtime
+            ):
+
+                try:
+                    self.create_thumbnail(wallpaper_file, cache_file)
+                    logger.info(f"Created/updated thumbnail for: {wallpaper_file.name}")
+                except Exception as e:
+                    logger.error(
+                        f"Error creating thumbnail for {wallpaper_file.name}: {e}"
+                    )
+
+    def create_thumbnail(self, source_path, dest_path):
+        """Create a PNG thumbnail from source image (16:9 aspect ratio)"""
+        tmp_png = None
+        try:
+            open_path = source_path
+
+            # JXL fallback: decode with djxl if the Pillow plugin is unavailable
+            if source_path.suffix.lower() == ".jxl" and not JXL_PLUGIN:
+                if shutil.which("djxl") is None:
+                    raise RuntimeError(
+                        "JXL support needs 'pillow-jxl-plugin' or 'djxl' (libjxl)"
+                    )
+                fd, tmp_name = tempfile.mkstemp(suffix=".png")
+                os.close(fd)
+                tmp_png = Path(tmp_name)
+                subprocess.run(
+                    ["djxl", str(source_path), str(tmp_png), "--quiet"],
+                    check=True,
+                    capture_output=True,
+                )
+                open_path = tmp_png
+
+            with Image.open(open_path) as img:
+                # Convert to RGB if needed
+                if img.mode in ("RGBA", "LA", "P"):
+                    # Create a white background for transparent images
+                    background = Image.new("RGBA", img.size, (255, 255, 255, 255))
+                    if img.mode == "RGBA":
+                        background.paste(img, mask=img.split()[-1])
+                    else:
+                        background.paste(img)
+                    img = background
+
+                # Calculate the target size while maintaining aspect ratio
+                img_ratio = img.width / img.height
+                target_ratio = THUMBNAIL_WIDTH / THUMBNAIL_HEIGHT
+
+                if img_ratio > target_ratio:
+                    # Image is wider than target, crop horizontally
+                    new_height = img.height
+                    new_width = int(new_height * target_ratio)
+                    left = (img.width - new_width) / 2
+                    top = 0
+                    right = left + new_width
+                    bottom = new_height
+                    img = img.crop((left, top, right, bottom))
+                else:
+                    # Image is taller than target, crop vertically
+                    new_width = img.width
+                    new_height = int(new_width / target_ratio)
+                    left = 0
+                    top = (img.height - new_height) / 2
+                    right = new_width
+                    bottom = top + new_height
+                    img = img.crop((left, top, right, bottom))
+
+                # Resize to target size
+                img = img.resize(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+
+                # Save as PNG
+                img.save(dest_path, "PNG")
+        except Exception as e:
+            if dest_path.exists():
+                dest_path.unlink()  # Remove potentially corrupted thumbnail
+            raise e
+        finally:
+            if tmp_png is not None and tmp_png.exists():
+                tmp_png.unlink()
+
+    def update_json_file(self, wallpaper_files):
+        """Update the JSON file with current wallpapers and thumbnails"""
+        wallpapers_data = []
+
+        for stem, wallpaper_file in wallpaper_files.items():
+            cache_file = CACHE_DIR / f"{stem}.png"
+
+            if cache_file.exists():
+                wallpapers_data.append(
+                    {
+                        "name": stem,
+                        "image": str(wallpaper_file),
+                        "thumbnail": str(cache_file),
+                        "ext": wallpaper_file.suffix,
+                    }
+                )
+
+        # Sort by name in reverse order
+        wallpapers_data.sort(key=lambda x: x["name"], reverse=True)
+
+        # Write to JSON file
+        try:
+            with open(JSON_FILE, "w") as f:
+                json.dump(wallpapers_data, f, indent=2)
+            logger.info(f"Updated JSON file with {len(wallpapers_data)} entries")
+        except Exception as e:
+            logger.error(f"Error writing JSON file: {e}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Wallpaper monitor and thumbnail generator"
+    )
+    parser.add_argument(
+        "-r",
+        "--refresh",
+        action="store_true",
+        help="Check for unprocessed changes and update, then exit",
+    )
+    args = parser.parse_args()
+
+    monitor = WallpaperMonitor()
+
+    if args.refresh:
+        # process_changes() was already called in __init__, just exit
+        return
+
+    try:
+        monitor.start()
+    except KeyboardInterrupt:
+        logger.info("Stopping wallpaper monitor")
+        monitor.stop()
+
+
+if __name__ == "__main__":
+    main()

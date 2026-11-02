@@ -1,0 +1,40 @@
+# Hypr
+~/.config/hypr/
+
+# Quickshell
+~/.config/quickshell/
+/etc/greetd/config.toml
+
+# Bins
+~/.local/bin/argospm
+~/.local/bin/libretranslate
+/usr/bin/bnchroma
+/usr/bin/bnclip
+
+# Scripts
+~/.local/share/bnsplit/scripts/bnpkgi
+~/.local/share/bnsplit/scripts/bnpkgr
+~/.local/share/bnsplit/scripts/launch-geoclue
+~/.local/share/bnsplit/scripts/qs-nothp
+~/.local/share/bnsplit/scripts/recolor-adwaita
+~/.local/share/bnsplit/scripts/select-wallpaper
+~/.local/share/bnsplit/scripts/tmux-main
+~/.local/share/bnsplit/scripts/todoist
+~/.local/share/bnsplit/scripts/upscale-wallpaper
+~/.local/share/bnsplit/scripts/wallwatch
+~/.local/share/bnsplit/scripts/xdg-desktop-portal-wallpaper-hypr
+
+# Apps
+~/.config/bnchroma/
+~/.config/kitty/
+~/.config/ghostty/
+~/.config/wezterm/
+~/.config/gtk-3.0/
+~/.config/gtk-4.0/
+~/.config/cava/
+
+# Theming / fonts
+~/.themes/custom-adw
+~/.icons/bn-adwaita/
+~/.fonts/
+/usr/share/fonts/Outfit/

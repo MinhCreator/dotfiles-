@@ -1,0 +1,4 @@
+#!/bin/bash
+
+VENV_PATH="$HOME/.local/bin/libretranslate_env"
+"$VENV_PATH/bin/python" "$VENV_PATH/bin/argospm" "$@"

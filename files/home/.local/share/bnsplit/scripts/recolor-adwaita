@@ -1,0 +1,128 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+MAIN_COLOR="${1:?usage: recolor-adwaita #rrggbb}"
+ADWAITA_SRC="/usr/share/icons/Adwaita"
+MOREWAITA_SRC="/usr/share/icons/MoreWaita"
+THEME_DIR="$HOME/.icons/bn-adwaita"
+
+[[ -d "$ADWAITA_SRC" ]] || {
+  echo "recolor-adwaita: source not found: $ADWAITA_SRC" >&2
+  exit 1
+}
+
+[[ -d "$MOREWAITA_SRC" ]] || {
+  echo "recolor-adwaita: source not found: $ADWAITA_SRC" >&2
+  exit 1
+}
+
+rm -rf "$THEME_DIR"
+mkdir -p "$THEME_DIR/scalable"
+mkdir -p "$THEME_DIR/scalable/mimetypes"
+mkdir -p "$THEME_DIR/scalable/status"
+
+cp "$ADWAITA_SRC/scalable/status/folder-open.svg" "$THEME_DIR/scalable/status/"
+cp -r "$ADWAITA_SRC/scalable/mimetypes" "$THEME_DIR/scalable/"
+cp -r "$ADWAITA_SRC/scalable/places" "$THEME_DIR/scalable/"
+cp -r "$MOREWAITA_SRC/scalable/places" "$THEME_DIR/scalable/"
+
+python3 - "$MAIN_COLOR" "$THEME_DIR" <<'PY'
+import colorsys, os, re, sys
+
+base = sys.argv[1].lstrip("#")
+theme_dir = sys.argv[2]
+
+HEX_RE = re.compile(r'#([0-9a-fA-F]{6})\b')
+
+def hex_to_hls(hexstr):
+    r, g, b = (int(hexstr[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+    return colorsys.rgb_to_hls(r, g, b)
+
+def hls_to_hex(h, l, s):
+    r, g, b = colorsys.hls_to_rgb(h, max(0.0, min(1.0, l)), max(0.0, min(1.0, s)))
+    return "".join(format(max(0, min(255, round(x * 255))), "02x") for x in (r, g, b))
+
+base_h, base_l, base_s = hex_to_hls(base)
+
+# Reference: Adwaita's own accent blue, #62a0ea, as the "0 shift" anchor.
+REF_H, REF_L, REF_S = hex_to_hls("62a0ea")
+
+SAT_MIN = 0.20
+HUE_TOLERANCE = 0.10
+
+STRUCTURAL_EXCEPTIONS = {"c0c6d6", "919fba"}
+
+def classify_and_shift(hexstr):
+    h, l, s = hex_to_hls(hexstr)
+
+    if hexstr.lower() in STRUCTURAL_EXCEPTIONS:
+        return None
+
+    if s < SAT_MIN:
+        return None
+
+    hue_dist = min(abs(h - REF_H), 1 - abs(h - REF_H))
+    if hue_dist > HUE_TOLERANCE:
+        return None
+
+    l_off = l - REF_L
+    s_off = s - REF_S
+    new_l = base_l + l_off
+    new_s = base_s + s_off
+    return "#" + hls_to_hex(base_h, new_l, new_s)
+
+count = 0
+for sub in ("scalable/places", "scalable/status", "scalable/mimetypes"):
+    root = os.path.join(theme_dir, sub)
+    for dirpath, _, filenames in os.walk(root, followlinks=False):
+        for fn in filenames:
+            if not fn.endswith(".svg"):
+                continue
+            fp = os.path.join(dirpath, fn)
+            if os.path.islink(fp):
+                continue
+            with open(fp, encoding="utf-8") as f:
+                content = f.read()
+
+            def repl(m):
+                new_hex = classify_and_shift(m.group(1))
+                return new_hex if new_hex else m.group(0)
+
+            new_content = HEX_RE.sub(repl, content)
+            if new_content != content:
+                with open(fp, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+                count += 1
+
+# print(f"recolor-adwaita: {count} svgs recolored to {base}")
+PY
+
+cat >"$THEME_DIR/index.theme" <<'INI'
+[Icon Theme]
+Name=bn-adwaita
+Comment=Adwaita recolored by bnchroma
+Inherits=MoreWaita,Adwaita,hicolor
+Hidden=true
+Directories=scalable/places,scalable/status,scalable/mimetypes
+
+[scalable/places]
+Context=Places
+Size=128
+MinSize=8
+MaxSize=512
+Type=Scalable
+
+[scalable/status]
+Context=Status
+Size=128
+MinSize=8
+MaxSize=512
+Type=Scalable
+
+[scalable/mimetypes]
+Context=MimeTypes
+Size=128
+MinSize=8
+MaxSize=512
+Type=Scalable
+INI

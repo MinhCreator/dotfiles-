@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# quickshell-nothp
+#
+# Starts quickshell with Transparent Huge Pages (THP) disabled for that
+# process only. Nothing system-wide changes, and other programs are untouched.
+#
+# Why: with THP set to "always" in the kernel, each thread's stack and
+# allocator area can get a full 2 MB huge page even if it only needs a few KB.
+# Quickshell has many threads, so the waste adds up. Disabling THP for this
+# process avoids that and lowers its RAM usage.
+#
+# How it works:
+#   1. python calls prctl(41, 1, 0, 0, 0)
+#        - 41 = PR_SET_THP_DISABLE (the "no huge pages for me" switch)
+#        - 1  = turn it on
+#   2. python then calls os.execvp, which replaces itself with quickshell.
+#      Python is gone afterward and only quickshell keeps running.
+#   3. The "no THP" flag is kept across that replacement, so quickshell
+#      starts with it already set.
+#
+# Usage: run this instead of quickshell. Any arguments are passed along,
+# e.g.  quickshell-nothp -c myconfig
+#
+# Check that it worked (should print "THP_enabled: 0"):
+#   grep THP_enabled /proc/$(pgrep -x quickshell)/status
+
+# "exec" replaces this shell script with python, so no extra process stays
+# around. The full path /usr/bin/quickshell is used so the script can never
+# accidentally call itself. "$@" forwards all arguments to quickshell.
+exec python -c 'import ctypes,os,sys;ctypes.CDLL(None).prctl(41,1,0,0,0);os.execvp(sys.argv[1],sys.argv[1:])' /usr/bin/quickshell "$@"

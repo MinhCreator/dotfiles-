@@ -1,0 +1,15 @@
+[general]
+framerate = 15
+bars = 8
+
+[input]
+
+[output]
+method = raw
+data_format = ascii
+
+[color]
+
+[smoothing]
+
+[eq]

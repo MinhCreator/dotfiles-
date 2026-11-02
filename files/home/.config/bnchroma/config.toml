@@ -1,0 +1,80 @@
+[vars]
+surface_base = "#131313"
+surface_raised = "#1A1A1A"
+surface_overlay = "#222222"
+surface_sunken = "#070707"
+overlay_tint = "255 255 255"
+border_dim = "#2E2E2E"
+border_mid = "#4D4D4D"
+text_muted = "#555555"
+text_secondary = "#888888"
+text_primary = "#C8C8C8"
+text_bright = "#FFFFFF"
+status_success = "#66BB6A"
+status_info = "#0A78D7"
+status_warning = "#C98A2A"
+status_error = "#F44336"
+term_bright_black = "#717171"
+scrollbar = "#6D657C"
+
+[[templates]]
+name = "main-color"
+template = "~/.config/bnchroma/templates/main-color"
+output = "~/.cache/bnsplit/main-color"
+
+[[templates]]
+name = "quickshell"
+template = "~/.config/bnchroma/templates/quickshell.json"
+output = "~/.config/quickshell/store/colors.json"
+
+[[templates]]
+name = "kitty"
+template = "~/.config/bnchroma/templates/kitty.conf"
+output = "~/.config/kitty/colors.conf"
+command = "pkill -SIGUSR1 kitty"
+
+[[templates]]
+name = "ghostty"
+template = "~/.config/bnchroma/templates/ghostty"
+output = "~/.config/ghostty/themes/custom"
+command = "pkill -SIGUSR2 ghostty"
+
+[[templates]]
+name = "wezterm"
+template = "~/.config/bnchroma/templates/wezterm.lua"
+output = "~/.config/wezterm/colors.lua"
+
+[[templates]]
+name = "gtk-solid"
+template = "~/.config/bnchroma/templates/gtk-solid.css"
+output = ["~/.themes/custom-adw/gtk-3.0/colors-solid.css", "~/.themes/custom-adw/gtk-4.0/colors-solid.css"]
+
+[[templates]]
+name = "gtk-xray"
+template = "~/.config/bnchroma/templates/gtk-xray.css"
+output = ["~/.themes/custom-adw/gtk-3.0/colors-xray.css", "~/.themes/custom-adw/gtk-4.0/colors-xray.css"]
+command = "dconf write /org/gnome/desktop/interface/gtk-theme \"''\"; sleep 0.05; dconf write /org/gnome/desktop/interface/gtk-theme \"'custom-adw'\""
+
+[[templates]]
+name = "obsidian"
+command = [
+  'jq --arg color "$BNCHROMA_C08_HEX" ".accentColor = \$color" $HOME/Obsidian/.obsidian/appearance.json > $HOME/Obsidian/.obsidian/appearance.json.tmp',
+  'test -s $HOME/Obsidian/.obsidian/appearance.json.tmp && mv $HOME/Obsidian/.obsidian/appearance.json.tmp $HOME/Obsidian/.obsidian/appearance.json',
+]
+
+# [[templates]]
+# name = "qt"
+# template = "~/.config/bnchroma/templates/qt.colors"
+# output = "~/.local/share/color-schemes/BnCustom.colors"
+# command = "plasma-apply-colorscheme BnCustom"
+
+[[templates]]
+name = "hypr"
+template = "~/.config/bnchroma/templates/hypr.conf"
+output = "~/.config/hypr/colors.conf"
+
+[[templates]]
+name = "cava"
+template = "~/.config/bnchroma/templates/cava"
+output = "~/.config/cava/config"
+command = "ps -eo pid,cmd | grep cava | grep -v 'cava -p /dev' | grep -v grep | xargs -r kill -USR1"

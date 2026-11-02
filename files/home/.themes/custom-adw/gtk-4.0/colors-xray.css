@@ -1,0 +1,12 @@
+@import "./colors-solid.css";
+
+@define-color window_bg_color rgba(19, 19, 19, 0.9);
+@define-color view_bg_color rgba(19, 19, 19, 0.9);
+@define-color headerbar_bg_color rgba(26, 26, 26, 0.9);
+@define-color sidebar_bg_color transparent;
+@define-color sidebar_backdrop_color transparent;
+@define-color secondary_sidebar_bg_color transparent;
+@define-color headerbar_bg_color transparent;
+@define-color headerbar_backdrop_color transparent;
+@define-color dialog_bg_color rgba(26, 26, 26, 0.9);
+@define-color thumbnail_bg_color rgba(34, 34, 34, 0.9);

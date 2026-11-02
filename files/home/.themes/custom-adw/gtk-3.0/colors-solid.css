@@ -1,0 +1,104 @@
+@define-color accent_bg_color #45676E;
+@define-color accent_fg_color #FFFFFF;
+@define-color accent_color #85ABB3;
+
+@define-color destructive_bg_color #F44336;
+@define-color destructive_fg_color #FFFFFF;
+@define-color destructive_color #F44336;
+
+@define-color error_bg_color #F44336;
+@define-color error_fg_color #FFFFFF;
+@define-color error_color #F44336;
+
+@define-color success_bg_color #66BB6A;
+@define-color success_fg_color #FFFFFF;
+@define-color success_color #66BB6A;
+
+@define-color warning_bg_color #C98A2A;
+@define-color warning_fg_color rgba(0, 0, 0, 0.87);
+@define-color warning_color #C98A2A;
+
+@define-color window_bg_color #131313;
+@define-color window_fg_color #FFFFFF; /* Nautilus top search bar */
+@define-color view_bg_color #131313;
+@define-color view_fg_color #FFFFFF;
+@define-color headerbar_bg_color #131313;
+@define-color headerbar_fg_color #FFFFFF;
+@define-color headerbar_border_color #2E2E2E;
+@define-color headerbar_backdrop_color @window_bg_color;
+@define-color headerbar_shade_color RGB(0 0 0/50%);
+@define-color headerbar_darker_shade_color RGB(0 0 0/80%);
+@define-color sidebar_bg_color #131313;
+@define-color sidebar_fg_color #FFFFFF; /* Sidebar titles and focused indicator */
+@define-color sidebar_backdrop_color #131313;
+@define-color sidebar_shade_color RGB(0 0 0/35%);
+@define-color sidebar_border_color RGB(0 0 0/50%);
+@define-color secondary_sidebar_bg_color #131313;
+@define-color secondary_sidebar_fg_color #FFFFFF;
+@define-color secondary_sidebar_backdrop_color #070707;
+@define-color secondary_sidebar_shade_color RGB(0 0 0/35%);
+@define-color secondary_sidebar_border_color RGB(0 0 0/50%);
+@define-color card_bg_color RGB(255 255 255/6%);
+@define-color card_fg_color #FFFFFF;
+@define-color card_shade_color RGB(0 0 0/50%);
+@define-color dialog_bg_color #1A1A1A;
+@define-color dialog_fg_color #FFFFFF;
+@define-color popover_bg_color #1A1A1A;
+@define-color popover_fg_color #FFFFFF;
+@define-color popover_shade_color RGB(0 0 0/35%);
+@define-color thumbnail_bg_color #222222;
+@define-color thumbnail_fg_color #FFFFFF;
+@define-color shade_color RGB(0 0 0/35%);
+@define-color scrollbar_outline_color rgba(109, 101, 124, 0.9);
+/* Public colors from Default */
+@define-color theme_bg_color @window_bg_color;
+@define-color theme_fg_color @window_fg_color;
+@define-color theme_base_color @view_bg_color;
+@define-color theme_text_color @view_fg_color;
+@define-color theme_selected_bg_color @accent_bg_color;
+@define-color theme_selected_fg_color @accent_fg_color;
+@define-color insensitive_bg_color mix(@window_bg_color,@view_bg_color,0.4);
+@define-color insensitive_fg_color alpha(@window_fg_color,0.5);
+@define-color insensitive_base_color @view_bg_color;
+@define-color borders alpha(currentColor,0.12);
+@define-color theme_unfocused_bg_color @window_bg_color;
+@define-color theme_unfocused_fg_color @window_fg_color;
+@define-color theme_unfocused_base_color @view_bg_color;
+@define-color theme_unfocused_text_color @view_fg_color;
+@define-color theme_unfocused_selected_bg_color @accent_bg_color;
+@define-color theme_unfocused_selected_fg_color @accent_fg_color;
+@define-color unfocused_insensitive_color @insensitive_bg_color;
+
+@define-color color1 #050708;
+@define-color color2 #121A1C;
+@define-color color3 #1E2E31;
+@define-color color4 #2B4145;
+@define-color color5 #385459;
+@define-color color6 #45676E;
+@define-color color7 #517A82;
+@define-color color8 #5E8D97;
+@define-color color9 #709DA6;
+@define-color color10 #85ABB3;
+@define-color color11 #99B9BF;
+@define-color color12 #ADC7CC;
+@define-color color13 #C2D5D9;
+@define-color color14 #D6E3E6;
+@define-color color15 #EBF1F2;
+@define-color color16 #FFFFFF;
+
+@define-color xcolor1 rgba(5,7,8,0.8);
+@define-color xcolor2 rgba(18,26,28,0.8);
+@define-color xcolor3 rgba(30,46,49,0.8);
+@define-color xcolor4 rgba(43,65,69,0.8);
+@define-color xcolor5 rgba(56,84,89,0.8);
+@define-color xcolor6 rgba(69,103,110,0.8);
+@define-color xcolor7 rgba(81,122,130,0.8);
+@define-color xcolor8 rgba(94,141,151,0.8);
+@define-color xcolor9 rgba(112,157,166,0.8);
+@define-color xcolor10 rgba(133,171,179,0.8);
+@define-color xcolor11 rgba(153,185,191,0.8);
+@define-color xcolor12 rgba(173,199,204,0.8);
+@define-color xcolor13 rgba(194,213,217,0.8);
+@define-color xcolor14 rgba(214,227,230,0.8);
+@define-color xcolor15 rgba(235,241,242,0.8);
+@define-color xcolor16 rgba(255,255,255,0.8);

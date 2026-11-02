@@ -1,0 +1,34 @@
+# Python / build junk
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+*.key
+*.pem
+
+# Editor / VCS / OS junk
+.git/
+*.swp
+*~
+*.bak
+*.orig
+.directory
+.DS_Store
+
+# Caches
+*.log
+.qmlcache/
+*.qmlc
+*.jsc
+fonts.cache-*
+
+# Hyprland
+secrets.lua
+
+# Quickshell
+.trash/
+.qmlls.ini
+/store/settings.json
+/store/colors.json
+/store/data.json

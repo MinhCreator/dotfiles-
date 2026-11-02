@@ -1,0 +1,82 @@
+#!/usr/bin/bash
+# Upscale the current wallpaper 2x with upscayl, keeping a backup of the original.
+# Triggered from the quickshell launcher (command.27). Long-running: caller uses
+# execDetached, this script notifies via `qs ipc call popup ...` on finish.
+
+set -u
+
+DATA_JSON="$HOME/.config/quickshell/store/data.json"
+SETTINGS_JSON="$HOME/.config/quickshell/store/settings.json"
+FALLBACK_WALL="$HOME/.cache/bnsplit/wallpaper"
+SCALE=2
+QUALITY=85
+MODEL="realesr-animevideov3-x2"
+MODELS_DIR="/usr/lib/upscayl/models"
+LOG="/tmp/bnsplit/upscale-wallpaper.log"
+BACKUP_DIR="$HOME/.cache/bnsplit/upscale-backups"
+
+fail() {
+  qs ipc call popup showError "Upscale Failed" "$1 (see $LOG)" 4000
+  exit 1
+}
+
+mkdir -p "$(dirname "$LOG")" /tmp/bnsplit "$BACKUP_DIR"
+: >"$LOG"
+
+# Resolve current wallpaper from quickshell data (legacy: settings), fallback to cached copy.
+WALL=$(qs ipc call data get wallpaperPath 2>>"$LOG" || true)
+[ -n "${WALL:-}" ] || WALL=$(python3 -c "import json; d=json.load(open('$DATA_JSON')); print(d.get('wallpaperPath','') or json.load(open('$SETTINGS_JSON')).get('wallpaperPath',''))" 2>>"$LOG" || true)
+[ -n "${WALL:-}" ] || WALL="$FALLBACK_WALL"
+[ -f "$WALL" ] || fail "No current wallpaper found"
+case "$WALL" in
+*.gif | *.GIF) fail "GIF wallpapers are not supported" ;;
+esac
+
+# Detect extension from the filename (wallpaper-tmp carries no suffix,
+# so check the basename and not the full path which may contain dots).
+BASE=$(basename -- "$WALL")
+if [[ "$BASE" == *.* ]]; then
+  EXT=".${BASE##*.}"
+else
+  EXT=".png"
+fi
+case "${EXT,,}" in
+.jpg | .jpeg | .png | .webp | .bmp) ;;
+*)
+  MIME=$(file --mime-type -b "$WALL" 2>>"$LOG" || echo "")
+  case "$MIME" in
+  image/jpeg) EXT=".jpg" ;;
+  image/png) EXT=".png" ;;
+  image/webp) EXT=".webp" ;;
+  image/bmp) EXT=".bmp" ;;
+  *) EXT=".png" ;;
+  esac
+  ;;
+esac
+
+# Backup the original into the cache backup dir (kept across reboots).
+# wallwatch only scans ~/Pictures/Wallpapers, so the cache dir is never indexed.
+STAMP=$(date +%Y%m%d-%H%M%S)-$$
+if [[ "$BASE" == *.* ]]; then STEM="${BASE%.*}"; else STEM="$BASE"; fi
+BACKUP_NAME="$STEM-$STAMP$EXT"
+cp -- "$WALL" "$BACKUP_DIR/$BACKUP_NAME" 2>>"$LOG" || fail "Could not back up original"
+
+TMP_OUT=$(mktemp "/tmp/bnsplit/upscaled.XXXXXX$EXT") || fail "Could not create temp file"
+
+upscayl-bin -i "$WALL" -o "$TMP_OUT" -s "$SCALE" -t 100 -m "$MODELS_DIR" -n "$MODEL" >>"$LOG" 2>&1 ||
+  fail "upscayl-bin failed"
+[ -f "$TMP_OUT" ] || fail "upscayl produced no output"
+
+# Always recompress (matches the nushell inspiration): JPEG-encode in place,
+# keeping the original filename/extension.
+magick "$TMP_OUT" -sampling-factor 4:2:0 -strip -quality "$QUALITY" -interlace JPEG "$TMP_OUT" >>"$LOG" 2>&1 ||
+  fail "magick recompress failed"
+
+cat -- "$TMP_OUT" >"$WALL" 2>>"$LOG" || fail "Could not replace original"
+rm -f -- "$TMP_OUT"
+
+"$BN_SCRIPTS/select-wallpaper" --path "$WALL" >>"$LOG" 2>&1 ||
+  fail "Re-applying wallpaper failed"
+
+SIZE=$(du -h -- "$WALL" | cut -f1)
+qs ipc call popup showSuccess "Wallpaper Upscaled" "2x upscale applied ($SIZE)" 4000

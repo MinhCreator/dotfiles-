@@ -1,0 +1,9 @@
+{
+  "rounded_corners": true,
+  "blur": {
+    "enabled": true
+  },
+  "shadow": {
+    "enabled": true
+  }
+}

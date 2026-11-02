@@ -1,0 +1,74 @@
+#!/bin/bash
+
+MAGENTA='\033[0;35m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# Stop sudo refresh on exit
+cleanup() {
+  [[ -n "$SUDO_PID" ]] && kill "$SUDO_PID" 2>/dev/null
+}
+trap cleanup EXIT
+
+# Common fzf options
+FZF_OPTS=(
+  --multi --cycle --layout=reverse
+  --margin 1
+  --preview 'yay -Qi {1}'
+  --preview-window 'down:60%:wrap:sharp'
+  --bind 'alt-p:toggle-preview,tab:toggle+down,esc:abort'
+  --bind 'alt-k:preview-up,alt-j:preview-down'
+  --color 'pointer:magenta,marker:magenta'
+  --border none
+)
+
+# If floating mode, relaunch in kitty window
+if [[ "$1" == "--float" ]]; then
+  hyprctl dispatch 'require("hyprland.lua.utils.workspaces"):go("new")'
+  sleep 0.1
+  kitty -o initial_window_width=122c -o initial_window_height=32c -o single_window_padding_width=0 --class float --title package-uninstall bash "$0"
+  exit 0
+fi
+
+# Silent mode: suppress desktop notification popup
+SILENT=0
+[[ "$1" == "--silent" ]] && SILENT=1
+
+# Select packages to uninstall
+pkg_name=$(yay -Qqe | fzf "${FZF_OPTS[@]}")
+[[ -z "$pkg_name" ]] && exit 0
+
+# Uninstall packages
+echo -e "Uninstalling packages...\n${MAGENTA}$pkg_name${NC}\n"
+sudo -v
+
+# Keep sudo alive in background
+while true; do
+  sudo -v
+  sleep 60
+done &
+SUDO_PID=$!
+
+# Send notification based on result
+notify() {
+  if [[ "$SILENT" != "1" ]]; then
+    if pidof qs quickshell >/dev/null 2>&1; then
+      qs ipc call popup "$1" 'Uninstallation finished' '' 2500
+    # else
+    #   notify-send -a Packages -i system-software-install 'Uninstallation finished' "$2"
+    fi
+  fi
+}
+
+if echo "$pkg_name" | xargs yay -Rns --noconfirm; then
+  notify showInfo 'All packages removed successfully'
+else
+  notify showError 'Some packages failed to uninstall'
+fi
+
+# Refocus the kitty window
+sleep 1
+hyprctl eval 'require("hyprland.lua.utils.windows"):focus("package-uninstall")' >/dev/null 2>&1
+
+echo -en "\n${YELLOW}Press any key to exit...${NC}"
+read -n 1 -s -r

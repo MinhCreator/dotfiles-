@@ -1,0 +1,175 @@
+#!/usr/bin/bash
+
+# ========================
+# Single Instance
+# ========================
+SCRIPT_PATH="$(realpath "$0")"
+CURRENT_PID=$$
+
+is_ancestor() {
+  local pid=$1 p=$PPID
+  while [[ $p -gt 1 ]]; do
+    [[ $p == "$pid" ]] && return 0
+    p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
+    [[ -z $p ]] && break
+  done
+  return 1
+}
+
+for pid in $(pgrep -f "$SCRIPT_PATH"); do
+  [[ $pid == "$CURRENT_PID" ]] && continue
+  is_ancestor "$pid" && continue
+  if tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q hyperfine; then
+    continue
+  fi
+  kill "$pid" 2>/dev/null
+done
+
+# ========================
+# Directory Configuration
+# ========================
+CACHE_DIR="$HOME/.cache/bnsplit"
+WALLS_DIR="$HOME/Pictures/Wallpapers"
+WEBP_CACHE="$CACHE_DIR/wallpaper-webps"
+STATE_DIR="$HOME/.local/state/bnsplit"
+
+mkdir -p "$WEBP_CACHE" "$STATE_DIR"
+
+# ========================
+# Color pipeline
+# ========================
+apply_colors() {
+  local COLOR_INDEX
+  [[ ! -f "$STATE_DIR/color-number" ]] && echo 1 >"$STATE_DIR/color-number"
+  read -r COLOR_INDEX <"$STATE_DIR/color-number"
+  bnchroma --path "$CACHE_DIR/wallpaper-webp" \
+    --color-index "$COLOR_INDEX" \
+    --min-lightness 0.025 \
+    --max-lightness 1.0 \
+    --quiet
+}
+
+# ========================
+# Refresh Colors
+# ========================
+refresh_colors() {
+  local MAIN_COLOR
+  local SCRIPT_DIR
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+  apply_colors
+  read -r MAIN_COLOR <"$CACHE_DIR/main-color"
+  "$SCRIPT_DIR/recolor-adwaita" "$MAIN_COLOR"
+
+  gsettings set org.gnome.desktop.interface gtk-theme ""
+  gsettings set org.gnome.desktop.interface gtk-theme "custom-adw"
+
+  gsettings set org.gnome.desktop.interface icon-theme "Adwaita"
+  gsettings set org.gnome.desktop.interface icon-theme "bn-adwaita"
+
+  plasma-apply-colorscheme --accent-color "$MAIN_COLOR"
+}
+
+# ========================
+# Color-only entry point
+# ========================
+if [[ "$1" == "--refresh" ]]; then
+  refresh_colors
+  exit 0
+fi
+
+# ========================
+# Wallpaper Selection
+# ========================
+if [[ "$1" == "--random" ]]; then
+  WALL=$(find "$WALLS_DIR" -type f ! -name '.*' \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) | shuf -n 1)
+elif [[ "$1" == "--select" ]]; then
+  WALL=$(zenity --title="select_wallpaper" --file-selection --filename="$WALLS_DIR/" --file-filter="Images | *.png *.jpg *.jpeg *.gif *.bmp *.webp")
+elif [[ "$1" == "--path" ]]; then
+  WALL=$(realpath "$2")
+else
+  WALL="$1"
+fi
+
+[ -z "$WALL" ] && exit 1
+WALL=$(realpath "$WALL")
+
+# ========================
+# External Wallpaper Handling
+# ========================
+case "$WALL" in
+"$WALLS_DIR"/*) ;;
+*)
+  TMP_WALL="$CACHE_DIR/wallpaper-tmp"
+  cp "$WALL" "$TMP_WALL"
+  WALL="$TMP_WALL"
+  ;;
+esac
+
+# ========================
+# Content Hash
+# ========================
+WALL_HASH=$(sha256sum "$WALL" | cut -c1-16)
+
+# ========================
+# Quickshell
+# ========================
+qs ipc call desktop wallpaper "$WALL" "$([[ -n "$TMP_WALL" && -f "$TMP_WALL" ]] && echo "true" || echo "false")" "$WALL_HASH"
+
+# ========================
+# Core Functions
+# ========================
+process_wallpaper() {
+  local input="$1"
+  local hash="$2"
+  local cached_webp="$WEBP_CACHE/$hash.webp"
+  local file_type
+  file_type=$(file --mime-type -b "$input")
+
+  # --- WebP ---
+  if [[ -f "$cached_webp" ]]; then
+    cmp -s "$cached_webp" "$CACHE_DIR/wallpaper-webp" ||
+      cp "$cached_webp" "$CACHE_DIR/wallpaper-webp"
+  else
+    if [[ "$file_type" == "image/webp" ]]; then
+      cp "$input" "$cached_webp"
+    else
+      ffmpeg -y -i "$input" \
+        -vf "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080" \
+        -vframes 1 -c:v libwebp -quality 88 -compression_level 6 \
+        "$cached_webp"
+    fi
+    cmp -s "$cached_webp" "$CACHE_DIR/wallpaper-webp" ||
+      cp "$cached_webp" "$CACHE_DIR/wallpaper-webp"
+  fi
+}
+
+# ========================
+# Wallpaper Processing
+# ========================
+process_wallpaper "$WALL" "$WALL_HASH"
+refresh_colors &
+
+awww img --transition-type none "$WALL"
+
+cmp -s "$WALL" "$CACHE_DIR/wallpaper" || cp "$WALL" "$CACHE_DIR/wallpaper"
+MAIN_MONITOR_NAME=$(hyprctl monitors -j | jq -r '.[] | select(.id == 0) | .name')
+AWWW_CACHE_DIR=""
+for d in "$HOME"/.cache/awww/*/; do
+  [[ -d "$d" ]] && AWWW_CACHE_DIR="$d"
+done
+
+MAIN_CACHE_FILE="$AWWW_CACHE_DIR/$MAIN_MONITOR_NAME"
+if [[ -n "$AWWW_CACHE_DIR" ]]; then
+  for file in "$AWWW_CACHE_DIR"/*; do
+    filename="${file##*/}"
+    if [[ -f "$file" && "$filename" != _* && "$filename" != "$MAIN_MONITOR_NAME" ]]; then
+      cmp -s "$MAIN_CACHE_FILE" "$file" || cp "$MAIN_CACHE_FILE" "$file"
+    fi
+  done
+fi
+
+# ========================
+# Cleanup
+# ========================
+wait

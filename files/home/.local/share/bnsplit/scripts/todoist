@@ -1,0 +1,837 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import json
+import os
+import re
+import signal
+import subprocess
+import sys
+import time
+from contextlib import contextmanager
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, NoReturn
+
+import requests
+
+# ── Paths / constants ──────────────────────────────────────────────────────
+
+CACHE_DIR = Path(os.environ["HOME"]) / ".cache" / "bnsplit" / "todoist"
+TASKS_FILE = CACHE_DIR / "tasks.json"
+QUEUE_FILE = CACHE_DIR / "queue.json"
+STATUS_FILE = CACHE_DIR / "status.json"
+LOG_FILE = CACHE_DIR / "daemon.log"
+PID_FILE = CACHE_DIR / "daemon.pid"
+AVATAR_FILE = CACHE_DIR / "avatar.jpg"
+
+API = "https://api.todoist.com"
+DAEMON_INTERVAL = 900  # seconds
+
+# Files the shell reads via FileView. Any write to these must notify the
+# shell explicitly (qs ipc call tasks reload) because atomic tmp+rename
+# writes change inodes and file watchers miss them.
+_NOTIFY_NAMES = frozenset({"tasks.json", "status.json"})
+
+TOKEN = os.environ.get("TODOIST_TOKEN")
+
+_local_id_counter = 0
+
+
+def make_local_id() -> str:
+    """Unique-enough placeholder id. The original bash used
+    local_$(date +%s)_$$ which collides on two adds within the same second
+    in the same process (e.g. scripted rapid-fire adds) — use ns + a
+    per-process counter instead."""
+    global _local_id_counter
+    _local_id_counter += 1
+    return f"local_{time.time_ns()}_{os.getpid()}_{_local_id_counter}"
+
+
+def die(msg: str, code: int = 1) -> NoReturn:
+    print(msg, file=sys.stderr)
+    sys.exit(code)
+
+
+# ── Storage: locked read/modify/write JSON files ───────────────────────────
+
+
+@contextmanager
+def _locked(path: Path):
+    """Exclusive lock via a sibling .lock file, like the bash flock pattern."""
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    with open(lock_path, "w") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+
+
+def read_json(path: Path) -> Any:
+    with open(path) as fh:
+        return json.load(fh)
+
+
+def write_json(path: Path, data: Any) -> None:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp, "w") as fh:
+        json.dump(data, fh, indent=None, separators=(",", ":"))
+    tmp.replace(path)  # atomic
+    if path.name in _NOTIFY_NAMES:
+        # Notify watchers explicitly: file watchers miss rename-replacements.
+        notify = globals().get("qs_reload")
+        if callable(notify):
+            notify()
+
+
+def modify_json(path: Path, fn) -> Any:
+    """Locked read-modify-write. fn(data) -> new_data. Returns new_data."""
+    with _locked(path):
+        data = read_json(path)
+        new_data = fn(data)
+        write_json(path, new_data)
+        return new_data
+
+
+def init_files() -> None:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    if not QUEUE_FILE.exists():
+        write_json(QUEUE_FILE, [])
+    if not TASKS_FILE.exists():
+        write_json(
+            TASKS_FILE,
+            {"todos": [], "projects": [], "labels": [], "sections": [], "user": {}},
+        )
+    if not STATUS_FILE.exists():
+        write_json(STATUS_FILE, {"syncing": False})
+
+
+def set_syncing(val: bool) -> None:
+    write_json(STATUS_FILE, {"syncing": val})
+
+
+def log(msg: str) -> None:
+    ts = datetime.now().strftime("%H:%M:%S")
+    with open(LOG_FILE, "a") as fh:
+        fh.write(f"[{ts}] {msg}\n")
+
+
+def online() -> bool:
+    try:
+        result = subprocess.run(
+            ["ping", "-c1", "-W5", "8.8.8.8"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=6,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+# ── Quick-add parsing ("buy milk #errands @today p2 //don't forget eggs") ──
+
+_TOKEN_RE = re.compile(
+    r"""
+    (?:^|(?<=\s))         # start or preceded by whitespace
+    (?:
+        (?P<priority>p[1-4]) |
+        \#(?P<project>\S+)  |
+        @(?P<label>\S+)
+    )
+    (?=\s|$)              # followed by whitespace or end
+    """,
+    re.VERBOSE,
+)
+
+
+def parse_quick_add(text: str) -> dict:
+    if "//" in text:
+        content, description = text.split("//", 1)
+        description = description.strip()
+    else:
+        content, description = text, ""
+
+    priority = 4
+    project = None
+    labels: list[str] = []
+
+    def repl(m: re.Match) -> str:
+        nonlocal priority, project
+        if m.group("priority"):
+            priority = int(m.group("priority")[1])
+        elif m.group("project"):
+            project = m.group("project")
+        elif m.group("label"):
+            labels.append(m.group("label"))
+        return " "
+
+    content = _TOKEN_RE.sub(repl, content)
+    content = re.sub(r"\s+", " ", content).strip()
+
+    return {
+        "content": content,
+        "description": description,
+        "priority": priority,
+        "project": project,
+        "labels": labels,
+    }
+
+
+# ── Todoist API client ──────────────────────────────────────────────────────
+
+
+class ApiError(Exception):
+    def __init__(self, status_code: int, text: str):
+        self.status_code = status_code
+        super().__init__(f"{status_code}: {text}")
+
+
+def _is_permanent_failure(e: ApiError) -> bool:
+    """4xx (other than 429 rate-limit) means the request itself is invalid —
+    retrying it unchanged will fail forever and jam the queue. 429/5xx are
+    transient and should keep being retried."""
+    return 400 <= e.status_code < 500 and e.status_code != 429
+
+
+def _headers() -> dict:
+    if not TOKEN:
+        die("TODOIST_TOKEN not set")
+    return {"Authorization": f"Bearer {TOKEN}"}
+
+
+def api_request(method: str, path: str, **kwargs) -> requests.Response:
+    return requests.request(
+        method, f"{API}{path}", headers=_headers(), timeout=15, **kwargs
+    )
+
+
+def api_create_task(body: dict) -> dict:
+    resp = api_request("POST", "/api/v1/tasks", json=body)
+    if resp.ok:
+        return resp.json()
+    raise ApiError(resp.status_code, resp.text)
+
+
+def api_close_task(task_id: str) -> None:
+    resp = api_request("POST", f"/api/v1/tasks/{task_id}/close")
+    if resp.ok:
+        return
+    if resp.status_code in (404, 400):
+        return  # already closed / invalid — treat as done, matches bash behavior
+    raise ApiError(resp.status_code, resp.text)
+
+
+def api_delete_task(task_id: str) -> None:
+    resp = api_request("DELETE", f"/api/v1/tasks/{task_id}")
+    if resp.ok:
+        return
+    if resp.status_code in (404, 400):
+        return
+    raise ApiError(resp.status_code, resp.text)
+
+
+def api_sync_all() -> dict:
+    resp = api_request(
+        "POST",
+        "/api/v1/sync",
+        data={"sync_token": "*", "resource_types": '["all"]'},
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def qs_reload() -> None:
+    try:
+        subprocess.run(
+            ["qs", "ipc", "call", "tasks", "reload"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        )
+    except Exception:
+        pass
+
+
+# ── Queue ────────────────────────────────────────────────────────────────
+
+
+def queue_push(op: str, payload: dict) -> None:
+    def add_entry(q: list) -> list:
+        q.append(
+            {"op": op, "payload": payload, "ts": datetime.now(timezone.utc).isoformat()}
+        )
+        return q
+
+    modify_json(QUEUE_FILE, add_entry)
+    qs_reload()
+
+
+def _rewrite_local_id(old: str, new: str) -> None:
+    """After an add succeeds remotely, rewrite any queue entries and the
+    tasks cache that still reference the local placeholder id."""
+
+    def fix_queue(q: list) -> list:
+        for entry in q:
+            if entry.get("payload", {}).get("id") == old:
+                entry["payload"]["id"] = new
+        return q
+
+    modify_json(QUEUE_FILE, fix_queue)
+
+    def fix_tasks(data: dict) -> dict:
+        for t in data["todos"]:
+            if t["id"] == old:
+                t["id"] = new
+                t["is_local"] = False
+        return data
+
+    modify_json(TASKS_FILE, fix_tasks)
+
+
+def _drop_pending_add(local_id: str) -> bool:
+    """Cancel a never-synced placeholder: drop its queued 'add' so it can
+    never be created remotely later (e.g. complete/delete while offline).
+    Returns True if an entry was dropped."""
+    removed = False
+
+    def drop(q: list) -> list:
+        nonlocal removed
+        kept = [
+            e
+            for e in q
+            if not (
+                e["op"] == "add" and e["payload"].get("local_id") == local_id
+            )
+        ]
+        removed = len(kept) != len(q)
+        return kept
+
+    modify_json(QUEUE_FILE, drop)
+    return removed
+
+
+def queue_drain() -> bool:
+    """Process queued ops one at a time (FIFO), popping each on success.
+    Returns True if the whole queue drained cleanly, False on first failure
+    (matching the bash 'return 1' short-circuit behavior)."""
+    queue = read_json(QUEUE_FILE)
+    if not queue:
+        return True
+
+    log(f"Draining {len(queue)} queued operation(s)...")
+
+    while True:
+        queue = read_json(QUEUE_FILE)
+        if not queue:
+            break
+        entry = queue[0]
+        op, payload = entry["op"], entry["payload"]
+
+        try:
+            if op == "add":
+                local_id = payload.get("local_id")
+                body = {k: v for k, v in payload.items() if k != "local_id"}
+                result = api_create_task(body)
+                new_id = result["id"]
+                log(f"\u2713 add: {result.get('content')} (remote: {new_id})")
+                if local_id:
+                    _rewrite_local_id(local_id, new_id)
+
+            elif op == "complete":
+                task_id = payload["id"]
+                if task_id.startswith("local_"):
+                    log(f"\u26a0 complete skipped: {task_id} (orphaned local ID)")
+                else:
+                    api_close_task(task_id)
+                    log(f"\u2713 complete: {task_id}")
+
+            elif op == "delete":
+                task_id = payload["id"]
+                if task_id.startswith("local_"):
+                    log(f"\u26a0 delete skipped: {task_id} (orphaned local ID)")
+                else:
+                    api_delete_task(task_id)
+                    log(f"\u2713 delete: {task_id}")
+
+        except (ApiError, requests.RequestException) as e:
+            if isinstance(e, ApiError) and _is_permanent_failure(e):
+                log(f"\u2717 {op} permanently failed, dropping from queue: {e}")
+                modify_json(QUEUE_FILE, lambda q: q[1:] if q else q)
+                continue
+            log(f"\u2717 {op} failed: {e}")
+            return False
+
+        # pop the processed (always first) item
+        modify_json(QUEUE_FILE, lambda q: q[1:] if q else q)
+
+    return True
+
+
+def pending_local_ids() -> set[str]:
+    """local_ids that still have a queued 'add' — i.e. not yet confirmed
+    synced. Used to decide which local placeholders to keep after a sync.
+    This replaces the bash version's in-memory SYNCED_LOCAL_IDS array,
+    which didn't survive across subshell/process boundaries and caused
+    placeholders to survive forever (duplicate tasks after sync)."""
+    queue = read_json(QUEUE_FILE)
+    return {
+        e["payload"]["local_id"]
+        for e in queue
+        if e["op"] == "add" and e["payload"].get("local_id")
+    }
+
+
+# ── API sync ─────────────────────────────────────────────────────────────
+
+
+def do_sync() -> bool:
+    log("Syncing...")
+    set_syncing(True)
+    try:
+        raw = api_sync_all()
+    except requests.RequestException as e:
+        log(f"Sync fetch failed: {e}")
+        set_syncing(False)
+        return False
+
+    projects = {p["id"]: p["name"] for p in raw.get("projects", [])}
+    active_sections = [
+        s
+        for s in raw.get("sections", [])
+        if not s.get("is_deleted") and not s.get("is_archived")
+    ]
+    sections = {s["id"]: s["name"] for s in active_sections}
+    child_counts: dict[str, int] = {}
+    for item in raw.get("items", []):
+        pid = item.get("parent_id")
+        if pid:
+            child_counts[pid] = child_counts.get(pid, 0) + 1
+
+    todos = []
+    for item in raw.get("items", []):
+        if item.get("parent_id") is not None:
+            continue
+        todos.append(
+            {
+                "id": item["id"],
+                "added_at": item.get("added_at"),
+                "due_date": (item.get("due") or {}).get("date"),
+                "content": item.get("content"),
+                "description": item.get("description"),
+                "labels": item.get("labels", []),
+                "priority": 5 - item.get("priority", 1),
+                "project": projects.get(item.get("project_id")),
+                "section": (
+                    sections.get(item.get("section_id"))
+                    if item.get("section_id")
+                    else None
+                ),
+                "subtask_count": child_counts.get(item["id"], 0),
+                "is_local": False,
+            }
+        )
+
+    user = raw.get("user", {}) or {}
+    new_data = {
+        "todos": todos,
+        "labels": [
+            {"id": l["id"], "name": l["name"], "color": l["color"]}
+            for l in raw.get("labels", [])
+        ],
+        "projects": [
+            {"id": p["id"], "name": p["name"], "color": p["color"]}
+            for p in raw.get("projects", [])
+        ],
+        "sections": [
+            {"id": s["id"], "name": s["name"], "project_id": s["project_id"]}
+            for s in active_sections
+        ],
+        "user": {
+            "full_name": user.get("full_name"),
+            "avatar": user.get("avatar_medium"),
+        },
+    }
+
+    # Keep only local placeholders that still have a pending queued add.
+    still_pending = pending_local_ids()
+
+    def merge(_current: dict) -> dict:
+        current = read_json(TASKS_FILE)
+        keep_locals = [
+            t
+            for t in current["todos"]
+            if t.get("is_local") and t["id"] in still_pending
+        ]
+        new_data["todos"] = new_data["todos"] + keep_locals
+        return new_data
+
+    modify_json(TASKS_FILE, merge)
+
+    avatar_url = user.get("avatar_medium")
+    if avatar_url:
+        try:
+            r = requests.get(avatar_url, timeout=10)
+            if r.ok:
+                AVATAR_FILE.write_bytes(r.content)
+        except requests.RequestException:
+            pass
+
+    synced_count = len(todos)
+    log(f"\u2713 Synced {synced_count} tasks")
+    set_syncing(False)
+    return True
+
+
+# ── Commands ─────────────────────────────────────────────────────────────
+
+
+def bg_push() -> None:
+    """Fire-and-forget background push, mirroring the bash version's
+    `( ... ) &` subshell. We detach a child process so the CLI returns
+    immediately after queuing the local change."""
+    pid = os.fork()
+    if pid == 0:
+        # child
+        os.setsid()
+        try:
+            with open(LOG_FILE, "a") as log_fh:
+                os.dup2(log_fh.fileno(), sys.stdout.fileno())
+                os.dup2(log_fh.fileno(), sys.stderr.fileno())
+            if online() and queue_drain():
+                do_sync()
+            qs_reload()
+        finally:
+            os._exit(0)
+    qs_reload()
+
+
+def resolve_due(due_string: str) -> str | None:
+    """Best-effort natural-language -> YYYY-MM-DD for the local placeholder
+    only; the server resolves the real due date at drain time."""
+    try:
+        result = subprocess.run(
+            ["date", "-d", due_string, "+%Y-%m-%d"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        candidate = result.stdout.strip()
+        return candidate if re.fullmatch(r"\d{4}-\d{2}-\d{2}", candidate) else None
+    except Exception:
+        return None
+
+
+def _insert_placeholder(
+    local_id: str,
+    content: str,
+    description: str,
+    labels: list,
+    priority: int,
+    project: str | None,
+    section: str | None,
+    due_date: str | None,
+) -> None:
+    placeholder = {
+        "id": local_id,
+        "added_at": datetime.now().astimezone().isoformat(),
+        "due_date": due_date,
+        "content": content,
+        "description": description,
+        "labels": labels,
+        "priority": priority,
+        "project": project,
+        "section": section,
+        "subtask_count": 0,
+        "is_local": True,
+    }
+    modify_json(TASKS_FILE, lambda d: (d["todos"].append(placeholder), d)[1])
+
+
+def _lookup_name(cache: dict, coll: str, item_id: str | None) -> str | None:
+    if not item_id:
+        return None
+    return next((x["name"] for x in cache.get(coll, []) if x["id"] == item_id), None)
+
+
+def cmd_add(text: str) -> None:
+    if not text.strip():
+        die("Usage: todoist-sync add TEXT")
+
+    local_id = make_local_id()
+    p = parse_quick_add(text)
+    _insert_placeholder(
+        local_id,
+        p["content"],
+        p["description"],
+        p["labels"],
+        p["priority"],
+        p["project"],
+        None,
+        None,
+    )
+
+    # NB: the original bash script queued the raw {text, local_id} and posted
+    # it straight to Todoist, which expects {"content": ...} not {"text": ...}
+    # — so plain `add` silently sent a malformed body, and #project/@label/pN
+    # tags only ever reached the local placeholder, never the real task. We
+    # queue the parsed, API-shaped body instead, resolving #project by name
+    # via the local project cache so it actually reaches the server.
+    cache = read_json(TASKS_FILE)
+    project_id = next(
+        (
+            pr["id"]
+            for pr in cache["projects"]
+            if pr["name"].lower() == (p["project"] or "").lower()
+        ),
+        None,
+    )
+    if p["project"] and project_id is None:
+        log(f"\u26a0 add: no project matching '#{p['project']}', leaving unassigned")
+
+    body = {
+        k: v
+        for k, v in {
+            "content": p["content"],
+            "description": p["description"] or None,
+            "labels": p["labels"] or None,
+            "priority": 5 - p["priority"],
+            "project_id": project_id,
+            "local_id": local_id,
+        }.items()
+        if v is not None
+    }
+    queue_push("add", body)
+    print(f"\u2713 Added: {text}")
+    bg_push()
+
+
+def cmd_add_json(payload_str: str) -> None:
+    if not payload_str:
+        die("Usage: todoist-sync add-json JSON")
+    try:
+        payload = json.loads(payload_str)
+    except json.JSONDecodeError:
+        die("Invalid JSON payload")
+
+    local_id = make_local_id()
+    prio_local = payload.get("priority", 4)
+    due_string = payload.get("due_string")
+    cache = read_json(TASKS_FILE)
+
+    _insert_placeholder(
+        local_id,
+        payload["content"],
+        payload.get("description", ""),
+        payload.get("labels", []),
+        prio_local,
+        _lookup_name(cache, "projects", payload.get("project_id")),
+        _lookup_name(cache, "sections", payload.get("section_id")),
+        resolve_due(due_string) if due_string else None,
+    )
+
+    body = {
+        k: v
+        for k, v in {
+            "content": payload["content"],
+            "description": payload.get("description"),
+            "project_id": payload.get("project_id"),
+            "section_id": payload.get("section_id"),
+            "labels": payload.get("labels", []),
+            "priority": 5 - prio_local,
+            "due_string": due_string,
+            "local_id": local_id,
+        }.items()
+        if v is not None
+    }
+    queue_push("add", body)
+    print(f"\u2713 Added: {payload['content']}")
+    bg_push()
+
+
+def cmd_complete(task_id: str) -> None:
+    if not task_id:
+        die("Usage: todoist-sync done ID")
+
+    def remove(data: dict) -> dict:
+        data["todos"] = [t for t in data["todos"] if t["id"] != task_id]
+        return data
+
+    if task_id.startswith("local_") and _drop_pending_add(task_id):
+        modify_json(TASKS_FILE, remove)
+        print(f"\u2713 Completed (never synced, add cancelled): {task_id}")
+        bg_push()
+        return
+
+    modify_json(TASKS_FILE, remove)
+
+    queue_push("complete", {"id": task_id})
+    print(f"\u2713 Completed: {task_id}")
+    bg_push()
+
+
+def cmd_delete(task_id: str) -> None:
+    if not task_id:
+        die("Usage: todoist-sync del ID")
+    if not re.fullmatch(r"[A-Za-z0-9_]+", task_id):
+        die(f"\u2717 Invalid task id, skipping: {task_id}")
+
+    def remove(data: dict) -> dict:
+        data["todos"] = [t for t in data["todos"] if t["id"] != task_id]
+        return data
+
+    if task_id.startswith("local_") and _drop_pending_add(task_id):
+        modify_json(TASKS_FILE, remove)
+        print(f"\u2713 Deleted (never synced, add cancelled): {task_id}")
+        bg_push()
+        return
+
+    modify_json(TASKS_FILE, remove)
+
+    queue_push("delete", {"id": task_id})
+    print(f"\u2713 Deleted: {task_id}")
+    bg_push()
+
+
+# ── Daemon ───────────────────────────────────────────────────────────────
+
+
+def daemon_loop() -> None:
+    log(f"Daemon started (sync every {DAEMON_INTERVAL // 60}min)")
+    while True:
+        if online():
+            if queue_drain():
+                do_sync()
+        else:
+            log("Offline, skipping")
+        time.sleep(DAEMON_INTERVAL)
+
+
+def cmd_daemon() -> None:
+    if PID_FILE.exists():
+        try:
+            pid = int(PID_FILE.read_text().strip())
+            os.kill(pid, 0)
+            print(f"Daemon already running (PID {pid})")
+            sys.exit(1)
+        except (OSError, ValueError):
+            pass  # stale pid file, continue
+
+    pid = os.fork()
+    if pid == 0:
+        os.setsid()
+        with open(LOG_FILE, "a") as log_fh:
+            os.dup2(log_fh.fileno(), sys.stdout.fileno())
+            os.dup2(log_fh.fileno(), sys.stderr.fileno())
+        try:
+            daemon_loop()
+        finally:
+            os._exit(0)
+    else:
+        PID_FILE.write_text(str(pid))
+        print(f"\u2713 Daemon started (PID {pid}), log: {LOG_FILE}")
+
+
+def cmd_stop() -> None:
+    if not PID_FILE.exists():
+        print("No daemon running")
+        return
+    try:
+        pid = int(PID_FILE.read_text().strip())
+        os.kill(pid, signal.SIGTERM)
+        PID_FILE.unlink()
+        print(f"\u2713 Daemon stopped (PID {pid})")
+    except (OSError, ValueError):
+        print("Daemon not running, removing stale PID file")
+        PID_FILE.unlink(missing_ok=True)
+
+
+# ── Main ─────────────────────────────────────────────────────────────────
+
+
+def main() -> None:
+    init_files()
+
+    parser = argparse.ArgumentParser(prog="todoist-sync", add_help=False)
+    sub = parser.add_subparsers(dest="command")
+
+    p_add = sub.add_parser("add")
+    p_add.add_argument("text", nargs="*")
+
+    p_addjson = sub.add_parser("add-json")
+    p_addjson.add_argument("payload", nargs="?", default="")
+
+    p_done = sub.add_parser("done")
+    p_done.add_argument("id", nargs="?", default="")
+
+    p_del = sub.add_parser("del")
+    p_del.add_argument("id", nargs="?", default="")
+
+    sub.add_parser("sync")
+    sub.add_parser("daemon")
+    sub.add_parser("stop")
+    sub.add_parser("status")
+    sub.add_parser("tasks")
+
+    args, _ = parser.parse_known_args()
+
+    if args.command == "add":
+        cmd_add(" ".join(args.text))
+    elif args.command == "add-json":
+        cmd_add_json(args.payload)
+    elif args.command == "done":
+        cmd_complete(args.id)
+    elif args.command == "del":
+        cmd_delete(args.id)
+    elif args.command == "sync":
+        if not online():
+            log("Offline, sync deferred")
+            print("Offline, will sync later")
+            sys.exit(0)
+        set_syncing(True)
+        if not (queue_drain() and do_sync()):
+            set_syncing(False)
+            sys.exit(1)
+    elif args.command == "daemon":
+        cmd_daemon()
+    elif args.command == "stop":
+        cmd_stop()
+    elif args.command == "status":
+        print(json.dumps(read_json(STATUS_FILE)))
+    elif args.command == "tasks":
+        for t in read_json(TASKS_FILE)["todos"]:
+            print(
+                json.dumps(
+                    {
+                        "id": t["id"],
+                        "content": t["content"],
+                        "priority": t["priority"],
+                        "project": t["project"],
+                        "due_date": t["due_date"],
+                        "is_local": t["is_local"],
+                    }
+                )
+            )
+    else:
+        print("""
+Commands:
+  add TEXT      Add a task (parsed locally, synced in background)
+  add-json JSON Add a task from a structured payload
+                {content, description, project_id, section_id, labels, priority, due_string}
+  done ID       Complete a task
+  del ID        Delete a task
+  sync          Force sync now
+  daemon        Start background daemon (syncs every 15min)
+  stop          Stop the daemon
+  status        Show sync status
+  tasks         List tasks (id, content, priority, project, due_date)
+""")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

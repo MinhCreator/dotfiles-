@@ -1,0 +1,9 @@
+-- ========================================
+--             WORKSPACERULES
+-- ========================================
+
+-- Maximized
+hl.workspace_rule({
+	workspace = "f[1]",
+	gaps_out = 0,
+})
