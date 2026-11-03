@@ -87,6 +87,7 @@ pacman_pkgs=(
   util-linux
   zoxide
   fd
+  vim
   zenity
   libqalculate
   gpu-screen-recorder
