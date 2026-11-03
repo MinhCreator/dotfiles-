@@ -5,7 +5,6 @@ clear
 
 dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 files=$dir/files
-wallpaper=$dir/assets/wallpaper.jpg
 old_home=/home/bnsplit
 
 stamp=$(date +%Y%m%d-%H%M%S)
@@ -242,22 +241,8 @@ step "Setting up LibreTranslate virtualenv"
 python -m venv "$HOME/.local/bin/libretranslate_env"
 "$HOME/.local/bin/libretranslate_env/bin/pip" install libretranslate
 
-# --- wallpaper ---
-step "Applying wallpaper"
-select_wallpaper=$HOME/.local/share/bnsplit/scripts/select-wallpaper
-if [[ -f $wallpaper && -x $select_wallpaper ]]; then
-  awww-daemon >/dev/null 2>&1 &
-  daemon_pid=$!
-  sleep 1
-  "$select_wallpaper" "$wallpaper" >/dev/null 2>&1 ||
-    warn "select-wallpaper failed, run it again from inside the session"
-  kill "$daemon_pid" 2>/dev/null || true
-else
-  warn "skipping wallpaper: need $wallpaper and an executable select-wallpaper"
-fi
-
 # --- summary ---
-printf '\n%sAll done!%s\n' "$c_green" "$c_off"
+printf '\n%sAll done !!!%s\n' "$c_green" "$c_off"
 if ((backed_up > 0)); then
   printf '%d existing file(s) were backed up to:\n  %s\n' "$backed_up" "$backup"
   printf 'restore with:\n  rsync -a "%s/home/" "%s/"\n  sudo rsync -a "%s/root/" /\n' "$backup" "$HOME" "$backup"
