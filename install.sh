@@ -74,6 +74,7 @@ pacman_pkgs=(
   networkmanager
   bluez
   upower
+  power-profiles-daemon
   pipewire
   wireplumber
   pipewire-pulse
