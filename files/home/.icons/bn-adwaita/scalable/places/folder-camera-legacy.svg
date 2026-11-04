@@ -24,11 +24,11 @@
     <linearGradient
        id="bg-gradient-2">
       <stop
-         style="stop-color:#86561b;stop-opacity:1"
+         style="stop-color:#797928;stop-opacity:1"
          offset="0"
          id="stop13402" />
       <stop
-         style="stop-color:#b07124;stop-opacity:1"
+         style="stop-color:#9f9f35;stop-opacity:1"
          offset="1"
          id="stop13404" />
     </linearGradient>
@@ -54,11 +54,11 @@
     <linearGradient
        id="linearGradient888">
       <stop
-         style="stop-color:#d6913c;stop-opacity:1"
+         style="stop-color:#c3c34f;stop-opacity:1"
          offset="0"
          id="stop884" />
       <stop
-         style="stop-color:#ba9c78;stop-opacity:1"
+         style="stop-color:#aaaa88;stop-opacity:1"
          offset="1"
          id="stop886" />
     </linearGradient>
@@ -158,7 +158,7 @@
        d="m 256,-84 -32,32 H 88 c 0,0 -40,0 -40,40 v 264 h 376 c 40,0 40,-40 40,-40 V -44 c 0,-40 -40,-40 -40,-40 z"
        id="path5792" />
     <path
-       style="font-variation-settings:normal;display:inline;opacity:1;fill:#d6913c;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
+       style="font-variation-settings:normal;display:inline;opacity:1;fill:#c3c34f;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
        d="m 480,1042 c 0,0 0,40 -40,40 l -375.998047,0.094 -0.0039,6 L 440,1088 c 40,0 40,-40 40,-40 z"
        transform="translate(-16,-836)"
        id="path5794" />
@@ -171,9 +171,9 @@
   <g
      id="surface105959-1"
      transform="matrix(3.4941816,0,0,3.4941816,134.02619,48.099307)"
-     style="fill:#8f5c1d;fill-opacity:1;stroke:none;stroke-width:0.893536" />
+     style="fill:#81812b;fill-opacity:1;stroke:none;stroke-width:0.893536" />
   <path
      id="path5625"
-     style="fill:#935e1e;fill-opacity:1;stroke-width:3.2"
+     style="fill:#85852c;fill-opacity:1;stroke-width:3.2"
      d="m 64,63.8 c -7.03133,0 -12.8,5.768672 -12.8,12.8 0,7.031328 5.76867,12.8 12.8,12.8 7.031328,0 12.8,-5.768672 12.8,-12.8 0,-7.031328 -5.768672,-12.8 -12.8,-12.8 z m 0,6.4 c 3.572512,0 6.4,2.827488 6.4,6.4 0,3.572512 -2.827488,6.4 -6.4,6.4 -3.57251,0 -6.4,-2.827488 -6.4,-6.4 0,-3.572512 2.82749,-6.4 6.4,-6.4 z M 59.2,51 c -0.84864,1.6e-4 -1.66246,0.337376 -2.2625,0.937504 L 51.47501,57.4 H 48 c -5.26304,0 -9.6,4.33696 -9.6,9.6 v 22.4 c 0,5.26304 4.33696,9.6 9.6,9.6 h 32 c 5.26304,0 9.6,-4.33696 9.6,-9.6 V 67 c 0,-5.26304 -4.33696,-9.6 -9.6,-9.6 H 76.524992 L 71.062496,51.937504 C 70.462464,51.337376 69.64864,51.00016 68.8,51 Z m 1.32499,6.4 h 6.950018 l 5.462496,5.462496 C 73.537536,63.462624 74.35136,63.79984 75.2,63.8 H 80 c 1.82816,0 3.2,1.37184 3.2,3.2 v 22.4 c 0,1.82816 -1.37184,3.2 -3.2,3.2 H 48 c -1.82816,0 -3.2,-1.37184 -3.2,-3.2 V 67 c 0,-1.82816 1.37184,-3.2 3.2,-3.2 h 4.8 c 0.84864,-1.6e-4 1.66246,-0.337376 2.2625,-0.937504 z" />
 </svg>

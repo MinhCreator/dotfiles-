@@ -190,7 +190,7 @@ mkdir -p -- "$backup"
 
 if [[ -d $tmp/home ]]; then
   info "copying to $HOME"
-  rsync -rltEOc --no-perms \
+  rsync -rLtEOc --no-perms \
     --backup --backup-dir="$backup/home" \
     -- "$tmp/home/" "$HOME/"
 fi

@@ -1,5 +1,5 @@
 {
-  "rounded_corners": true,
+  "rounded_corners": false,
   "blur": {
     "enabled": true
   },
