@@ -15,14 +15,19 @@ local function get_target_workspace(arg, is_move)
 	local monitor_workspaces = {}
 	local global_max_id = 0
 
+	-- hl.notification.create({
+	-- 	text = active_workspace.addressable_name,
+	-- 	timeout = 10000,
+	-- })
+
 	-- Filter and gather workspace info
 	for _, ws in pairs(workspaces) do
-		if ws.id >= 1 then
+		if ws.id ~= nil and ws.id >= 1 and not ws.special then
 			if ws.id > global_max_id then
 				global_max_id = ws.id
 			end
 
-			if ws.monitor.id == active_monitor.id then
+			if ws.monitor and ws.monitor.id == active_monitor.id then
 				table.insert(monitor_workspaces, ws)
 			end
 		end
@@ -49,25 +54,28 @@ local function get_target_workspace(arg, is_move)
 	-- Direct workspace id (m~1, m~2, etc.)
 	if type(arg) == "number" then
 		local target_ws = monitor_workspaces[arg]
-		if target_ws and target_ws.id == active_workspace.id then
-			if hl.get_active_special_workspace() ~= nil then
-				return active_workspace.id
-			else
-				return "previous_per_monitor"
+		if target_ws then
+			if target_ws.addressable_name == active_workspace.addressable_name then
+				if hl.get_active_special_workspace() ~= nil then
+					return active_workspace.addressable_name
+				else
+					return "previous_per_monitor"
+				end
 			end
+			return target_ws.addressable_name
 		end
 		return "m~" .. arg
 	end
 
 	if arg == "next" then
 		-- If on the last workspace of the monitor and it's empty, stop
-		if last_ws and active_workspace.id == last_ws.id and active_workspace.windows == 0 then
+		if last_ws and active_workspace.addressable_name == last_ws.addressable_name and active_workspace.windows == 0 then
 			return nil
 		end
 
 		local last_non_empty = get_last_non_empty()
 		-- Next on the last non-empty workspace opens a new one
-		if last_non_empty and active_workspace.id == last_non_empty.id then
+		if last_non_empty and active_workspace.addressable_name == last_non_empty.addressable_name then
 			-- For move, only create new if there's at least one OTHER window
 			local threshold = is_move and 1 or 0
 			if active_workspace.windows > threshold then
@@ -79,24 +87,24 @@ local function get_target_workspace(arg, is_move)
 		end
 	elseif arg == "previous" then
 		-- If on the first workspace of the monitor, stop
-		if first_ws and active_workspace.id == first_ws.id then
+		if first_ws and active_workspace.addressable_name == first_ws.addressable_name then
 			return nil
 		end
 		return "m-1"
 	elseif arg == "last" then
 		local last_non_empty = get_last_non_empty()
-		return last_non_empty and last_non_empty.id or nil
+		return last_non_empty and last_non_empty.addressable_name or nil
 	elseif arg == "back" then
 		return "previous_per_monitor"
 	elseif arg == "new" then
 		if is_move then
 			-- If on the last workspace of the monitor and it's empty, stop
-			if last_ws and active_workspace.id == last_ws.id and active_workspace.windows == 0 then
+			if last_ws and active_workspace.addressable_name == last_ws.addressable_name and active_workspace.windows == 0 then
 				return nil
 			end
 
 			local last_non_empty = get_last_non_empty()
-			if last_non_empty and active_workspace.id == last_non_empty.id then
+			if last_non_empty and active_workspace.addressable_name == last_non_empty.addressable_name then
 				local threshold = is_move and 1 or 0
 				if active_workspace.windows > threshold then
 					return global_max_id + 1

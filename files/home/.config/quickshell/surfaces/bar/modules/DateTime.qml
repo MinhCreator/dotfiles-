@@ -180,19 +180,19 @@ BarModule {
                         }
 
                         NavigationButton {
-                            type: "previous"
                             iconName: "chevron_left"
                             Layout.fillHeight: true
                             Layout.preferredWidth: height
                             Layout.margins: 4
+                            onActivated: expandedContentItem.previousMonth()
                         }
 
                         NavigationButton {
-                            type: "next"
                             iconName: "chevron_right"
                             Layout.fillHeight: true
                             Layout.preferredWidth: height
                             Layout.margins: 4
+                            onActivated: expandedContentItem.nextMonth()
                         }
                     }
 
@@ -325,7 +325,7 @@ BarModule {
                     font.pixelSize: Theme.fontPixelSizes.normal
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignLeft
-                    elide: Text.ElideRight
+                    elide: Text.ElideMiddle
                 }
 
                 Item {
@@ -407,44 +407,17 @@ BarModule {
                         }
                     }
 
-                    Item {
-                        anchors.fill: parent
+                    StyledText {
+                        id: emptyText
                         visible: root.selectedEvents.length === 0
-
-                        ActivityIndicator {
-                            id: emptyIndicator
-                            anchors.centerIn: parent
-                            size: 40
-                            running: CalendarService.loading || opacity > 0
-                            opacity: CalendarService.loading ? 1 : 0
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.animations.duration.normal
-                                    easing.type: Theme.animations.easing.outCubic
-                                }
-                            }
-                        }
-
-                        StyledText {
-                            id: emptyText
-                            anchors.centerIn: parent
-                            width: parent.width - 16
-                            text: CalendarService.error !== "" ? CalendarService.error : "No events"
-                            color: Theme.colors.textMuted
-                            font.pixelSize: Theme.fontPixelSizes.normal
-                            font.weight: Font.DemiBold
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.Wrap
-                            opacity: CalendarService.loading ? 0 : 1
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.animations.duration.normal
-                                    easing.type: Theme.animations.easing.outCubic
-                                }
-                            }
-                        }
+                        anchors.centerIn: parent
+                        width: parent.width - 16
+                        text: CalendarService.error !== "" ? CalendarService.error : "No events"
+                        color: Theme.colors.textMuted
+                        font.pixelSize: Theme.fontPixelSizes.normal
+                        font.weight: Font.DemiBold
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
                     }
                 }
             }
@@ -469,8 +442,7 @@ BarModule {
     component NavigationButton: StyledRectangle {
         id: navigationButton
         property string iconName
-        property string type
-        property bool isHovered: false
+        signal activated
 
         color: ColorUtils.transparentize(Theme.colors.white, 0.125)
         border.color: ColorUtils.transparentize(Theme.colors.white, 0.22)
@@ -481,12 +453,10 @@ BarModule {
             anchors.fill: parent
             onPressed: mouse => {
                 mouse.accepted = true;
-                navigationButton.type === "previous" ? previousMonth() : nextMonth();
+                navigationButton.activated();
             }
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onEntered: navigationButton.isHovered = true
-            onExited: navigationButton.isHovered = false
         }
 
         MaterialSymbol {

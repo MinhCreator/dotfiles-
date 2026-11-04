@@ -52,12 +52,14 @@ Singleton {
     property var _daysByDate: ({})
     property var _monthCache: ({})
     property var _pending: null
+    property var _prefetch: []
     property var _activeRequest: null
     property var _lastRequest: null
     property bool _loading: false
     property string _error: ""
     readonly property int cacheTtl: 600000
     readonly property int dataVersion: 2
+    readonly property var prefetchOffsets: [1, -1, 2, -2]
 
     function dateKey(value) {
         if (value instanceof Date)
@@ -74,30 +76,40 @@ Singleton {
         return root._daysByDate[root.dateKey(value)] ?? [];
     }
 
-    function ensureMonth(year, month) {
-        const monthNumber = month + 1;
-        const key = year + "-" + (monthNumber < 10 ? "0" : "") + monthNumber;
-        const cached = root._monthCache[key];
-        if (cached && Date.now() - cached.fetchedAt < root.cacheTtl)
-            return;
-        if (root._activeRequest?.key === key || root._pending?.key === key)
-            return;
-
-        // The grid shows a few days of the adjacent months, so fetch one week
-        // on each side to keep those cells accurate too.
+    // Builds the fetch window for a month. The grid shows a few days of the
+    // adjacent months, so fetch one week on each side.
+    function _buildRequest(year, month) {
         const first = new Date(year, month, 1);
-        const next = new Date(year, month + 1, 1);
-        const start = new Date(first);
-        const end = new Date(next);
+        const y = first.getFullYear();
+        const m = first.getMonth() + 1;
+        const start = new Date(y, first.getMonth(), 1);
+        const end = new Date(y, first.getMonth() + 1, 1);
         start.setDate(start.getDate() - 7);
         end.setDate(end.getDate() + 7);
-
-        root._pending = {
-            key: key,
+        return {
+            key: y + "-" + (m < 10 ? "0" : "") + m,
             start: root.dateKey(start),
             end: root.dateKey(end)
         };
-        root._lastRequest = root._pending;
+    }
+
+    function _isFresh(key) {
+        const cached = root._monthCache[key];
+        return cached !== undefined && Date.now() - cached.fetchedAt < root.cacheTtl;
+    }
+
+    function ensureMonth(year, month) {
+        const request = root._buildRequest(year, month);
+        root._lastRequest = request;
+
+        // Neighbouring months are fetched in the background once the
+        // visible one is done, so navigating usually hits the cache.
+        root._prefetch = root.prefetchOffsets.map(offset => root._buildRequest(year, month + offset));
+
+        if (root._isFresh(request.key) || root._activeRequest?.key === request.key)
+            root._pending = null;
+        else
+            root._pending = request;
         monthDebounce.restart();
     }
 
@@ -112,27 +124,51 @@ Singleton {
         monthDebounce.restart();
     }
 
-    function _runPending() {
-        if (root._loading || root._pending === null)
-            return;
-
-        const request = root._pending;
-        root._pending = null;
-        root._activeRequest = request;
-        root._lastRequest = request;
-        root._loading = true;
-        root._error = "";
-        fetcher.exec(["python3", FileUtils.trimFileProtocol(Paths.calendarFetcherScript), "--start", request.start, "--end", request.end, "--key", request.key, "--output", FileUtils.trimFileProtocol(Paths.calendarFile), "--lock", FileUtils.trimFileProtocol(Paths.calendarLockFile)]);
+    function _nextRequest() {
+        if (root._pending !== null) {
+            const request = root._pending;
+            root._pending = null;
+            return request;
+        }
+        while (root._prefetch.length > 0) {
+            const request = root._prefetch.shift();
+            if (!root._isFresh(request.key))
+                return request;
+        }
+        return null;
     }
 
+    function _runPending() {
+        if (root._loading || !daemon.running)
+            return;
+
+        const request = root._nextRequest();
+        if (request === null)
+            return;
+
+        root._activeRequest = request;
+        root._loading = true;
+        root._error = "";
+        daemon.write(JSON.stringify({
+            start: request.start,
+            end: request.end,
+            key: request.key
+        }) + "\n");
+    }
+
+    // Exactly one line comes back per request.
     function _handleOutput(text) {
-        const payload = StringUtils.safeParse(text, null);
+        root._applyPayload(StringUtils.safeParse(text, null));
+        root._loading = false;
+        root._activeRequest = null;
+        root._runPending();
+    }
+
+    function _applyPayload(payload) {
         if (!payload) {
             root._error = "Invalid calendar response";
             return;
         }
-        if (payload.skipped)
-            return;
         if (payload.available === false) {
             root._error = payload.error ?? "Calendar data unavailable";
             return;
@@ -144,42 +180,16 @@ Singleton {
 
         root._data = payload;
         const key = payload.key ?? root._activeRequest?.key;
-        if (!key)
-            return;
-
-        const cache = Object.assign({}, root._monthCache);
-        cache[key] = {
-            fetchedAt: Date.now()
-        };
-        root._monthCache = cache;
-        if (payload.window)
-            root._applyFetch(payload, payload.window.start, payload.window.end);
-        root._error = (payload.errors ?? []).join("; ");
-    }
-
-    function _loadFromFile() {
-        const payload = StringUtils.safeParse(calendarFile.text(), null);
-        if (!payload || !payload.available || !payload.days)
-            return;
-        if (payload.version !== root.dataVersion) {
-            root._data = ({});
-            root._daysByDate = ({});
-            root._monthCache = ({});
-            return;
-        }
-
-        root._data = payload;
-
-        const fetchedAt = Date.parse(payload.generated_at ?? "");
-        if (payload.key) {
+        if (key) {
             const cache = Object.assign({}, root._monthCache);
-            cache[payload.key] = {
-                fetchedAt: isNaN(fetchedAt) ? 0 : fetchedAt
+            cache[key] = {
+                fetchedAt: Date.now()
             };
             root._monthCache = cache;
         }
         if (payload.window)
             root._applyFetch(payload, payload.window.start, payload.window.end);
+        root._error = (payload.errors ?? []).join("; ");
     }
 
     function _applyFetch(payload, start, end) {
@@ -213,14 +223,13 @@ Singleton {
     }
 
     Component.onCompleted: {
-        root._loadFromFile();
         const now = new Date();
         root.ensureMonth(now.getFullYear(), now.getMonth());
     }
 
     Timer {
         id: monthDebounce
-        interval: 150
+        interval: 40
         onTriggered: root._runPending()
     }
 
@@ -231,10 +240,19 @@ Singleton {
         onTriggered: root.todayDate = new Date()
     }
 
+    Timer {
+        id: restartTimer
+        interval: 2000
+        onTriggered: daemon.running = true
+    }
+
     Process {
-        id: fetcher
-        stdout: StdioCollector {
-            onStreamFinished: root._handleOutput(text)
+        id: daemon
+        running: true
+        stdinEnabled: true
+        command: ["python3", FileUtils.trimFileProtocol(Paths.calendarFetcherScript), "--serve"]
+        stdout: SplitParser {
+            onRead: data => root._handleOutput(data)
         }
         stderr: StdioCollector {
             onStreamFinished: {
@@ -245,22 +263,13 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             root._loading = false;
             root._activeRequest = null;
-            if (exitCode !== 0 && root._error === "")
-                root._error = "Calendar fetch failed (exit " + exitCode + ")";
-            if (root._pending !== null)
-                root._runPending();
+            if (root._error === "")
+                root._error = "Calendar daemon exited (" + exitCode + ")";
+            restartTimer.restart();
         }
-    }
-
-    FileView {
-        id: calendarFile
-        path: Paths.calendarFile
-        watchChanges: true
-        blockLoading: true
-        onLoaded: root._loadFromFile()
-        onFileChanged: {
-            reload();
-            root._loadFromFile();
+        onRunningChanged: {
+            if (running)
+                monthDebounce.restart();
         }
     }
 }

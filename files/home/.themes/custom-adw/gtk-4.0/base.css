@@ -8094,6 +8094,7 @@ monthcell.today:selected:hover {
 
 monthcell label.day-label {
   font-size: 1rem;
+  color: white;
 }
 
 monthcell.out-of-month {
@@ -9512,4 +9513,9 @@ styleselector checkbutton > radio:not(:checked):not(:indeterminate), styleselect
 
 window#desktopwindow.background {
   background: none;
+}
+
+/* Fix gnome calendar */
+.day-label.first-day.numeric {
+  color: white;
 }

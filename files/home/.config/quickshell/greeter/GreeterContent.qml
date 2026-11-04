@@ -14,7 +14,12 @@ Rectangle {
     anchors.fill: parent
     color: Theme.colors.color2
 
-    property bool wallpaperIsGif: GlobalData.wallpaperPath.endsWith(".gif")
+    readonly property string wallpaperPath: GlobalData.wallpaperPath || Paths.defaultWallpaper
+    readonly property string wallpaperImagePath: GlobalData.wallpaperWebpPath || wallpaperPath
+    readonly property string wallpaperVersion: GlobalData.wallpaperContentHash || wallpaperPath
+    readonly property string wallpaperImageSource: Qt.resolvedUrl(wallpaperImagePath) + "?v=" + encodeURIComponent(wallpaperVersion)
+    readonly property string wallpaperAnimatedSource: Qt.resolvedUrl(wallpaperPath) + "?v=" + encodeURIComponent(wallpaperVersion)
+    readonly property bool wallpaperIsGif: wallpaperPath.endsWith(".gif")
 
     SystemClock {
         id: clock
@@ -32,7 +37,7 @@ Rectangle {
                 Image {
                     id: sharpImage
                     anchors.fill: parent
-                    source: Qt.resolvedUrl(GlobalData.wallpaperWebpPath)
+                    source: root.wallpaperImageSource
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: false
@@ -49,7 +54,7 @@ Rectangle {
 
                 Image {
                     anchors.fill: parent
-                    source: Qt.resolvedUrl(GlobalData.wallpaperWebpPath)
+                    source: root.wallpaperImageSource
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: false
@@ -80,7 +85,7 @@ Rectangle {
         sourceComponent: Component {
             AnimatedImage {
                 anchors.fill: parent
-                source: Qt.resolvedUrl(GlobalData.wallpaperPath)
+                source: root.wallpaperAnimatedSource
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: false

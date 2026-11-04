@@ -24,11 +24,11 @@
     <linearGradient
        id="bg-gradient-2">
       <stop
-         style="stop-color:#3d5d63;stop-opacity:1"
+         style="stop-color:#86561b;stop-opacity:1"
          offset="0"
          id="stop13402" />
       <stop
-         style="stop-color:#517a82;stop-opacity:1"
+         style="stop-color:#b07124;stop-opacity:1"
          offset="1"
          id="stop13404" />
     </linearGradient>
@@ -54,11 +54,11 @@
     <linearGradient
        id="linearGradient888">
       <stop
-         style="stop-color:#6e9ba3;stop-opacity:1"
+         style="stop-color:#d6913c;stop-opacity:1"
          offset="0"
          id="stop884" />
       <stop
-         style="stop-color:#989898;stop-opacity:1"
+         style="stop-color:#ba9c78;stop-opacity:1"
          offset="1"
          id="stop886" />
     </linearGradient>
@@ -158,7 +158,7 @@
        d="m 256,-84 -32,32 H 88 c 0,0 -40,0 -40,40 v 264 h 376 c 40,0 40,-40 40,-40 V -44 c 0,-40 -40,-40 -40,-40 z"
        id="path5792" />
     <path
-       style="font-variation-settings:normal;display:inline;opacity:1;fill:#6e9ba3;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
+       style="font-variation-settings:normal;display:inline;opacity:1;fill:#d6913c;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
        d="m 480,1042 c 0,0 0,40 -40,40 l -375.998047,0.094 -0.0039,6 L 440,1088 c 40,0 40,-40 40,-40 z"
        transform="translate(-16,-836)"
        id="path5794" />
@@ -171,9 +171,9 @@
   <g
      id="surface105959-1"
      transform="matrix(3.4941816,0,0,3.4941816,134.02619,48.099307)"
-     style="fill:#426369;fill-opacity:1;stroke:none;stroke-width:0.893536" />
+     style="fill:#8f5c1d;fill-opacity:1;stroke:none;stroke-width:0.893536" />
   <path
      id="rect9"
-     style="fill:#43666d;fill-opacity:1;stroke-width:3.75306"
+     style="fill:#935e1e;fill-opacity:1;stroke-width:3.75306"
      d="m 41.5,57 v 11.999999 h 6.000001 V 63 h 5.999991 v -6 z m 16.564437,0 v 6 h 8.935561 v -6 z m 13.376965,0 v 6 h 6.058596 v 5.999999 h 6.000007 V 57 Z M 41.5,73.500001 V 82.5 h 6.000001 v -8.999999 z m 35.999998,0 V 82.5 h 6.000007 V 73.500001 Z M 41.5,87 v 12.000002 h 11.999991 v -6.000001 h -5.99999 V 87 Z m 35.999998,0 v 6.000001 h -6.058596 v 6.000001 h 6.058596 V 105 h 6.000007 v -5.999998 h 5.999999 V 93.000001 H 83.500006 V 87 Z m -19.435561,6.000001 v 6.000001 h 8.935561 v -6.000001 z" />
 </svg>

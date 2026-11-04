@@ -24,11 +24,11 @@
     <linearGradient
        id="bg-gradient-2">
       <stop
-         style="stop-color:#3d5d63;stop-opacity:1"
+         style="stop-color:#86561b;stop-opacity:1"
          offset="0"
          id="stop13402" />
       <stop
-         style="stop-color:#517a82;stop-opacity:1"
+         style="stop-color:#b07124;stop-opacity:1"
          offset="1"
          id="stop13404" />
     </linearGradient>
@@ -54,11 +54,11 @@
     <linearGradient
        id="linearGradient888">
       <stop
-         style="stop-color:#6e9ba3;stop-opacity:1"
+         style="stop-color:#d6913c;stop-opacity:1"
          offset="0"
          id="stop884" />
       <stop
-         style="stop-color:#989898;stop-opacity:1"
+         style="stop-color:#ba9c78;stop-opacity:1"
          offset="1"
          id="stop886" />
     </linearGradient>
@@ -158,7 +158,7 @@
        d="m 256,-84 -32,32 H 88 c 0,0 -40,0 -40,40 v 264 h 376 c 40,0 40,-40 40,-40 V -44 c 0,-40 -40,-40 -40,-40 z"
        id="path5792" />
     <path
-       style="font-variation-settings:normal;display:inline;opacity:1;fill:#6e9ba3;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
+       style="font-variation-settings:normal;display:inline;opacity:1;fill:#d6913c;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
        d="m 480,1042 c 0,0 0,40 -40,40 l -375.998047,0.094 -0.0039,6 L 440,1088 c 40,0 40,-40 40,-40 z"
        transform="translate(-16,-836)"
        id="path5794" />
@@ -171,10 +171,10 @@
   <g
      id="surface105959-1"
      transform="matrix(3.4941816,0,0,3.4941816,134.02619,48.099307)"
-     style="fill:#426369;fill-opacity:1;stroke:none;stroke-width:0.893536" />
+     style="fill:#8f5c1d;fill-opacity:1;stroke:none;stroke-width:0.893536" />
   <path
      d="m 58.767311,99.249805 -1.03059,-43.718078 q -4.5007,1.687057 -7.03058,5.279995 -2.50165,3.594346 -2.50165,8.937871 0,1.218358 0.12564,2.000468 0.1553,0.749649 0.312,1.218358 0.15671,0.43764 0.28236,0.68753 0.15529,0.249879 0.15529,0.437638 -1.656,0 -2.93647,-0.311998 -1.28188,-0.34447 -2.15718,-1.063059 -0.84423,-0.71717 -1.31293,-1.905878 -0.43765,-1.185879 -0.43765,-2.936468 0,-2.124697 0.90494,-4.187286 0.93741,-2.061177 2.53129,-3.906355 1.62494,-1.842348 3.78211,-3.405167 2.18824,-1.562828 4.656,-2.687998 2.49882,-1.156238 5.18682,-1.780238 2.71906,-0.657879 5.40706,-0.657879 0.71858,0 1.31293,0.0311 0.624,0.0311 1.248,0.09319 l 0.5633,39.374069 13.46822,-39.18772 h 4.46823 l -17.77975,47.68936 h -9.21881 z"
      fill="#ffffff"
      id="path2018"
-     style="fill:#43666d;fill-opacity:1;stroke-width:1.41176" />
+     style="fill:#935e1e;fill-opacity:1;stroke-width:1.41176" />
 </svg>

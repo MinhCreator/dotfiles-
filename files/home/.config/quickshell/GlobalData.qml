@@ -37,6 +37,7 @@ Singleton {
     property var recordingRegion: _jsonData.recordingRegion || null
     property string wallpaperPath: _jsonData.wallpaperPath || ""
     property string wallpaperWebpPath: _jsonData.wallpaperWebpPath || ""
+    property string wallpaperContentHash: _jsonData.wallpaperContentHash || ""
     property double lastUpdateCheck: _jsonData.lastUpdateCheck || 0
     property string processesSortCriteria: _jsonData.processesSortCriteria || "cpu"
     property var desktopWidgetData: {

@@ -23,6 +23,8 @@ Singleton {
             return;
         GlobalData.wallpaperPath = wallpaperPath;
         root.wallpaperContentHash = contentHash ?? "";
+        if (contentHash !== undefined && contentHash !== "")
+            GlobalData.wallpaperContentHash = contentHash;
         root.refresh();
     }
 

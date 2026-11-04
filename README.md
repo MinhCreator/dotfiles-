@@ -1,1 +1,1 @@
-# BnSplit dotfiles
+# BnSplit's dotfiles

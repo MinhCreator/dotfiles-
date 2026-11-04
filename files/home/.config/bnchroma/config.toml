@@ -56,19 +56,6 @@ output = ["~/.themes/custom-adw/gtk-3.0/colors-xray.css", "~/.themes/custom-adw/
 command = "dconf write /org/gnome/desktop/interface/gtk-theme \"''\"; sleep 0.05; dconf write /org/gnome/desktop/interface/gtk-theme \"'custom-adw'\""
 
 [[templates]]
-name = "obsidian"
-command = [
-  'jq --arg color "$BNCHROMA_C08_HEX" ".accentColor = \$color" $HOME/Obsidian/.obsidian/appearance.json > $HOME/Obsidian/.obsidian/appearance.json.tmp',
-  'test -s $HOME/Obsidian/.obsidian/appearance.json.tmp && mv $HOME/Obsidian/.obsidian/appearance.json.tmp $HOME/Obsidian/.obsidian/appearance.json',
-]
-
-# [[templates]]
-# name = "qt"
-# template = "~/.config/bnchroma/templates/qt.colors"
-# output = "~/.local/share/color-schemes/BnCustom.colors"
-# command = "plasma-apply-colorscheme BnCustom"
-
-[[templates]]
 name = "hypr"
 template = "~/.config/bnchroma/templates/hypr.conf"
 output = "~/.config/hypr/colors.conf"

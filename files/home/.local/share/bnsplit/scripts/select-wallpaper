@@ -98,7 +98,7 @@ WALL=$(realpath "$WALL")
 # External Wallpaper Handling
 # ========================
 case "$WALL" in
-"$WALLS_DIR"/*) ;;
+"$WALLS_DIR"/*|"$HOME/.config/quickshell/assets"/*) ;;
 *)
   TMP_WALL="$CACHE_DIR/wallpaper-tmp"
   cp "$WALL" "$TMP_WALL"
@@ -110,11 +110,6 @@ esac
 # Content Hash
 # ========================
 WALL_HASH=$(sha256sum "$WALL" | cut -c1-16)
-
-# ========================
-# Quickshell
-# ========================
-qs ipc call desktop wallpaper "$WALL" "$([[ -n "$TMP_WALL" && -f "$TMP_WALL" ]] && echo "true" || echo "false")" "$WALL_HASH"
 
 # ========================
 # Core Functions
@@ -148,6 +143,12 @@ process_wallpaper() {
 # Wallpaper Processing
 # ========================
 process_wallpaper "$WALL" "$WALL_HASH"
+
+# ========================
+# Quickshell
+# ========================
+qs ipc call desktop wallpaper "$WALL" "$([[ -n "$TMP_WALL" && -f "$TMP_WALL" ]] && echo "true" || echo "false")" "$WALL_HASH"
+
 refresh_colors &
 
 awww img --transition-type none "$WALL"

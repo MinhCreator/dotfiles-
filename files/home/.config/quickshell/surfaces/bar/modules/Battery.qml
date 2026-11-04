@@ -204,6 +204,7 @@ BarModule {
                     }
 
                     Row {
+                        visible: BatteryService.battery.healthSupported
                         spacing: 4
                         MaterialSymbol {
                             iconName: "favorite"
@@ -227,6 +228,7 @@ BarModule {
 
             RowLayout {
                 Layout.fillWidth: true
+                visible: BatteryService.battery.healthSupported
                 spacing: 8
 
                 StyledSwitch {

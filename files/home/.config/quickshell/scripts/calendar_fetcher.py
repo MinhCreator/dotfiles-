@@ -4,6 +4,11 @@
 Reads the calendars selected in GNOME Calendar (local and remote/CalDAV) and
 prints a JSON agenda for the requested date range. Recurring events are
 expanded by EDS itself, so the output contains real occurrences.
+
+Modes:
+  one-shot (default): fetch a range, write --output, print the JSON.
+  --serve:            stay alive; read one JSON request per line on stdin
+                      ({"start","end","key"}) and answer with one JSON line.
 """
 
 import argparse
@@ -13,6 +18,7 @@ import json
 import os
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 
 DEFAULT_OUTPUT = os.path.expanduser("~/.local/state/bnsplit/calendar.json")
 DEFAULT_LOCK = os.path.expanduser("~/.local/state/bnsplit/calendar.lock")
@@ -20,13 +26,20 @@ PAYLOAD_VERSION = 2
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Fetch calendar events from Evolution Data Server")
+    parser = argparse.ArgumentParser(
+        description="Fetch calendar events from Evolution Data Server"
+    )
     parser.add_argument("--start", help="Start date, inclusive (YYYY-MM-DD)")
     parser.add_argument("--end", help="End date, exclusive (YYYY-MM-DD)")
     parser.add_argument("--month", help="Fetch a whole month (YYYY-MM)")
     parser.add_argument("--key", help="Opaque cache key echoed back in the output")
     parser.add_argument("--output", default=DEFAULT_OUTPUT, help="JSON output file")
     parser.add_argument("--lock", default=DEFAULT_LOCK, help="Lock file")
+    parser.add_argument(
+        "--serve",
+        action="store_true",
+        help="Persistent mode: JSON requests on stdin, one JSON line per reply",
+    )
     return parser.parse_args()
 
 
@@ -83,7 +96,11 @@ def recurrence_id(component):
 
 
 def format_iso(epoch):
-    return dt.datetime.fromtimestamp(epoch, dt.timezone.utc).astimezone().isoformat(timespec="seconds")
+    return (
+        dt.datetime.fromtimestamp(epoch, dt.timezone.utc)
+        .astimezone()
+        .isoformat(timespec="seconds")
+    )
 
 
 def acquire_lock(path):
@@ -103,7 +120,9 @@ def write_json(path, payload):
     directory = os.path.dirname(path)
     if directory:
         os.makedirs(directory, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(dir=directory or ".", prefix=".calendar-", suffix=".json")
+    fd, tmp_path = tempfile.mkstemp(
+        dir=directory or ".", prefix=".calendar-", suffix=".json"
+    )
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
@@ -129,7 +148,10 @@ def build_event(component, start_time, end_time, calendar, ical):
     description = component.get_description() or ""
     location = component.get_location() or ""
     url = prop_value(component, ical.PropertyKind.URL_PROPERTY)
-    transparent = prop_value(component, ical.PropertyKind.TRANSP_PROPERTY).upper() == "TRANSPARENT"
+    transparent = (
+        prop_value(component, ical.PropertyKind.TRANSP_PROPERTY).upper()
+        == "TRANSPARENT"
+    )
 
     dtstart = component.get_dtstart()
     dtend = component.get_dtend()
@@ -166,17 +188,10 @@ def build_event(component, start_time, end_time, calendar, ical):
         start_day = local_day(start_epoch)
         last_day = local_day(end_epoch - 1)
 
-    recurrence = component.get_recurrenceid()
-    recurrence_id = ""
-    if recurrence is not None:
-        try:
-            if not recurrence.is_null_time():
-                recurrence_id = recurrence.as_ical_string()
-        except Exception:
-            pass
+    rid = recurrence_id(component)
 
     event = {
-        "id": f"{calendar['uid']}:{uid}:{recurrence_id or start_epoch}",
+        "id": f"{calendar['uid']}:{uid}:{rid or start_epoch}",
         "uid": uid,
         "summary": summary,
         "description": description,
@@ -197,162 +212,234 @@ def build_event(component, start_time, end_time, calendar, ical):
     return event, start_day, last_day
 
 
-def fetch(start_date, end_date, key):
-    payload = {
-        "available": False,
-        "version": PAYLOAD_VERSION,
-        "key": key,
-        "generated_at": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
-        "window": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-        "calendars": [],
-        "days": [],
-        "events": [],
-        "errors": [],
-    }
+def collect(client, calendar, ical, start_epoch, end_epoch):
+    """Query one calendar and expand its recurrences. Returns (instances, errors)."""
+    ok, components = client.get_object_list_sync(
+        time_range_query(start_epoch, end_epoch), None
+    )
+    if not ok:
+        raise RuntimeError("could not list calendar objects")
 
-    try:
+    errors = []
+    masters = []
+    exceptions = []
+    for component in components or []:
+        try:
+            if component.get_component_name() != "VEVENT":
+                continue
+        except Exception:
+            continue
+        rid = recurrence_id(component)
+        if rid:
+            exceptions.append((component, rid))
+        else:
+            masters.append(component)
+
+    instances = {}
+
+    def add_instances(component, source_rid=""):
+        source_uid = component.get_uid() or ""
+
+        def on_instance(instance, instance_start, instance_end, *_rest):
+            try:
+                built = build_event(
+                    instance, instance_start, instance_end, calendar, ical
+                )
+            except Exception as exc:
+                errors.append(f"{calendar['uid']}: {exc}")
+                return
+            if not built:
+                if source_rid:
+                    instances.pop((calendar["uid"], source_uid, source_rid), None)
+                return
+            event, first_day, last_day = built
+            if source_rid:
+                ikey = (calendar["uid"], event["uid"], source_rid)
+            else:
+                ikey = (
+                    calendar["uid"],
+                    event["uid"],
+                    recurrence_id(instance) or event["startEpoch"],
+                )
+            instances[ikey] = (event, first_day, last_day)
+
+        try:
+            client.generate_instances_for_object_sync(
+                component, start_epoch, end_epoch, None, on_instance, None
+            )
+        except Exception as exc:
+            errors.append(f"{calendar['uid']}: {exc}")
+
+    for component in masters:
+        add_instances(component)
+    for component, rid in exceptions:
+        add_instances(component, rid)
+
+    return list(instances.values()), errors
+
+
+class Backend:
+    def __init__(self):
         import gi
+
         gi.require_version("EDataServer", "1.2")
         gi.require_version("ECal", "2.0")
         gi.require_version("ICalGLib", "4.0")
-        from gi.repository import ECal, EDataServer, ICalGLib
-    except Exception as exc:
-        payload["error"] = f"Evolution Data Server bindings unavailable: {exc}"
-        return payload
+        from gi.repository import ECal, EDataServer, GLib, ICalGLib
 
-    try:
-        registry = EDataServer.SourceRegistry.new_sync(None)
-    except Exception as exc:
-        payload["error"] = f"Could not open the Evolution source registry: {exc}"
-        return payload
-    if registry is None:
-        payload["error"] = "Could not open the Evolution source registry"
-        return payload
+        self.ECal, self.EDataServer, self.GLib, self.ical = (
+            ECal,
+            EDataServer,
+            GLib,
+            ICalGLib,
+        )
+        self.registry = EDataServer.SourceRegistry.new_sync(None)
+        if self.registry is None:
+            raise RuntimeError("Could not open the Evolution source registry")
+        self.clients = {}
+        self.pool = ThreadPoolExecutor(max_workers=4)
 
-    payload["available"] = True
-    start_epoch = local_midnight(start_date)
-    end_epoch = local_midnight(end_date)
-    days = {}
-    flat_events = []
+    def pump(self):
+        # Let the registry process D-Bus updates (calendars toggled in GNOME Calendar).
+        ctx = self.GLib.MainContext.default()
+        while ctx.pending():
+            ctx.iteration(False)
 
-    try:
-        sources = registry.list_sources(EDataServer.SOURCE_EXTENSION_CALENDAR)
-    except Exception as exc:
-        payload["error"] = f"Could not list calendar sources: {exc}"
-        payload["available"] = False
-        return payload
-
-    for source in sources:
-        try:
-            extension = source.get_extension(EDataServer.SOURCE_EXTENSION_CALENDAR)
-            if extension is None or not source.get_enabled() or not extension.get_selected():
-                continue
-        except Exception as exc:
-            payload["errors"].append(f"{source.get_uid()}: {exc}")
-            continue
-
-        calendar = {
-            "uid": source.get_uid(),
-            "name": source.get_display_name() or source.get_uid(),
-            "color": extension.get_color() or "",
-            "backend": extension.get_backend_name() or "",
-        }
-        payload["calendars"].append(calendar)
-
-        try:
-            client = ECal.Client.connect_sync(source, ECal.ClientSourceType.EVENTS, 5, None)
-        except Exception as exc:
-            payload["errors"].append(f"{calendar['uid']}: {exc}")
-            continue
+    def client_for(self, source):
+        uid = source.get_uid()
+        client = self.clients.get(uid)
         if client is None:
-            payload["errors"].append(f"{calendar['uid']}: calendar backend unavailable")
-            continue
+            client = self.ECal.Client.connect_sync(
+                source, self.ECal.ClientSourceType.EVENTS, 5, None
+            )
+            if client is None:
+                raise RuntimeError("calendar backend unavailable")
+            self.clients[uid] = client
+        return client
+
+    def fetch(self, start_date, end_date, key):
+        self.pump()
+        payload = {
+            "available": True,
+            "version": PAYLOAD_VERSION,
+            "key": key,
+            "generated_at": dt.datetime.now()
+            .astimezone()
+            .isoformat(timespec="seconds"),
+            "window": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+            "calendars": [],
+            "days": [],
+            "errors": [],
+        }
+        start_epoch = local_midnight(start_date)
+        end_epoch = local_midnight(end_date)
 
         try:
-            ok, components = client.get_object_list_sync(
-                time_range_query(start_epoch, end_epoch), None
+            sources = self.registry.list_sources(
+                self.EDataServer.SOURCE_EXTENSION_CALENDAR
             )
         except Exception as exc:
-            payload["errors"].append(f"{calendar['uid']}: {exc}")
-            continue
-        if not ok:
-            payload["errors"].append(f"{calendar['uid']}: could not list calendar objects")
-            continue
+            payload["available"] = False
+            payload["error"] = f"Could not list calendar sources: {exc}"
+            return payload
 
-        masters = []
-        exceptions = []
-        for component in components or []:
+        jobs = []
+        for source in sources:
             try:
-                if component.get_component_name() != "VEVENT":
+                ext = source.get_extension(self.EDataServer.SOURCE_EXTENSION_CALENDAR)
+                if ext is None or not source.get_enabled() or not ext.get_selected():
                     continue
-            except Exception:
-                continue
-            source_recurrence_id = recurrence_id(component)
-            if source_recurrence_id:
-                exceptions.append((component, source_recurrence_id))
-            else:
-                masters.append(component)
-
-        instances = {}
-
-        def add_instances(component, source_recurrence_id=""):
-            source_uid = component.get_uid() or ""
-
-            def on_instance(instance, instance_start, instance_end, *_rest):
-                try:
-                    built = build_event(instance, instance_start, instance_end, calendar, ICalGLib)
-                except Exception as exc:
-                    payload["errors"].append(f"{calendar['uid']}: {exc}")
-                    return
-                if not built:
-                    if source_recurrence_id:
-                        instances.pop((calendar["uid"], source_uid, source_recurrence_id), None)
-                    return
-                event, first_day, last_day = built
-                if source_recurrence_id:
-                    key = (calendar["uid"], event["uid"], source_recurrence_id)
-                else:
-                    instance_recurrence_id = recurrence_id(instance)
-                    key = (
-                        calendar["uid"],
-                        event["uid"],
-                        instance_recurrence_id or event["startEpoch"],
-                    )
-                instances[key] = (event, first_day, last_day)
-
-            try:
-                client.generate_instances_for_object_sync(
-                    component, start_epoch, end_epoch, None, on_instance, None
-                )
+                calendar = {
+                    "uid": source.get_uid(),
+                    "name": source.get_display_name() or source.get_uid(),
+                    "color": ext.get_color() or "",
+                    "backend": ext.get_backend_name() or "",
+                }
             except Exception as exc:
-                payload["errors"].append(f"{calendar['uid']}: {exc}")
+                payload["errors"].append(f"{source.get_uid()}: {exc}")
+                continue
+            payload["calendars"].append(calendar)
+            jobs.append((source, calendar))
 
-        for component in masters:
-            add_instances(component)
-        for component, source_recurrence_id in exceptions:
-            add_instances(component, source_recurrence_id)
+        def run(job):
+            source, calendar = job
+            last = None
+            for _ in range(2):  # second attempt = reconnect after a stale client
+                try:
+                    client = self.client_for(source)
+                    return collect(client, calendar, self.ical, start_epoch, end_epoch)
+                except Exception as exc:
+                    last = exc
+                    self.clients.pop(calendar["uid"], None)
+            return [], [f"{calendar['uid']}: {last}"]
 
-        for event, first_day, last_day in instances.values():
-            flat_events.append(event)
-            current = first_day
-            while current <= last_day:
-                if start_date <= current < end_date:
-                    days.setdefault(current.isoformat(), []).append(event)
-                current += dt.timedelta(days=1)
+        days = {}
+        for instances, errors in self.pool.map(run, jobs):
+            payload["errors"].extend(errors)
+            for event, first_day, last_day in instances:
+                current = first_day
+                while current <= last_day:
+                    if start_date <= current < end_date:
+                        days.setdefault(current.isoformat(), []).append(event)
+                    current += dt.timedelta(days=1)
 
-    def event_order(event):
-        return (0 if event["allDay"] else 1, event["startEpoch"], event["summary"].lower())
+        def event_order(event):
+            return (
+                0 if event["allDay"] else 1,
+                event["startEpoch"],
+                event["summary"].lower(),
+            )
 
-    payload["days"] = [
-        {"date": date, "events": sorted(days[date], key=event_order)}
-        for date in sorted(days)
-    ]
-    payload["events"] = sorted(flat_events, key=event_order)
-    return payload
+        payload["days"] = [
+            {"date": d, "events": sorted(days[d], key=event_order)}
+            for d in sorted(days)
+        ]
+        return payload
+
+
+def serve():
+    try:
+        backend = Backend()
+    except Exception as exc:
+        print(
+            json.dumps(
+                {
+                    "available": False,
+                    "version": PAYLOAD_VERSION,
+                    "error": f"Evolution Data Server unavailable: {exc}",
+                }
+            ),
+            flush=True,
+        )
+        return 1
+
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            req = json.loads(line)
+            payload = backend.fetch(
+                dt.date.fromisoformat(req["start"]),
+                dt.date.fromisoformat(req["end"]),
+                req.get("key"),
+            )
+        except Exception as exc:
+            payload = {
+                "available": False,
+                "version": PAYLOAD_VERSION,
+                "error": str(exc),
+            }
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    return 0
 
 
 def main():
     args = parse_args()
+    if args.serve:
+        return serve()
+
     try:
         start_date, end_date = parse_range(args)
     except ValueError as exc:
@@ -365,7 +452,14 @@ def main():
         return 0
 
     try:
-        payload = fetch(start_date, end_date, args.key)
+        try:
+            payload = Backend().fetch(start_date, end_date, args.key)
+        except Exception as exc:
+            payload = {
+                "available": False,
+                "version": PAYLOAD_VERSION,
+                "error": f"Evolution Data Server unavailable: {exc}",
+            }
         write_json(args.output, payload)
         print(json.dumps(payload, ensure_ascii=False))
         return 0 if payload.get("available") else 1
