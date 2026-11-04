@@ -39,8 +39,14 @@ colors=$out/home/.config/quickshell/store/colors.json
   echo "missing default wallpaper or bnchroma config/template" >&2
   exit 1
 }
-command -v bnchroma >/dev/null || { echo "bnchroma not found" >&2; exit 1; }
-command -v ffmpeg >/dev/null || { echo "ffmpeg not found" >&2; exit 1; }
+command -v bnchroma >/dev/null || {
+  echo "bnchroma not found" >&2
+  exit 1
+}
+command -v ffmpeg >/dev/null || {
+  echo "ffmpeg not found" >&2
+  exit 1
+}
 
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
