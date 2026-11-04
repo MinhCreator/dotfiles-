@@ -29,6 +29,7 @@ secrets.lua
 # Quickshell
 .trash/
 .qmlls.ini
+scripts/cache/
 /store/settings.json
 /store/colors.json
 /store/data.json
