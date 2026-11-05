@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-    <video src="assets/showcase.mkv" controls width="100%"></video>
+    <video src="assets/showcase.mp4" controls width="100%"></video>
 </div>
 
 ## Notable features
