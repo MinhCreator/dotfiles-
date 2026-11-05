@@ -40,8 +40,6 @@ Singleton {
     readonly property string greeterSettingsJsonFile: "/var/lib/greeter/bnsplit/greeter-settings.json"
     readonly property string qalcHistory: state + "/qalc.history"
     readonly property string weatherFile: state + "/weather.json"
-    // readonly property string calendarFile: state + "/calendar.json"
-    // readonly property string calendarLockFile: state + "/calendar.lock"
     readonly property string mprisFile: state + "/mpris-players.json"
     readonly property string updatesJsonFile: state + "/updates.json"
     readonly property string todoistTasksFile: cache + "/bnsplit/todoist/tasks.json"
