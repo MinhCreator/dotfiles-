@@ -2,9 +2,7 @@
     <h1>BnSplit's dotfiles</h1>
 </div>
 
-<div align="center">
-    <video src="assets/showcase.mp4" controls width="100%"></video>
-</div>
+https://github.com/user-attachments/assets/a6f72f9f-44ff-4d04-871c-307303bada15
 
 ## Notable features
 
