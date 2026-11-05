@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-    <video src="assets/showcase.mp4" controls width="100%"></video>
+    <video src="assets/showcase.mkv" controls width="100%"></video>
 </div>
 
 ## Notable features
@@ -26,8 +26,8 @@ Existing files that would be overwritten are backed up first.
 
 ### Keybinds
 
-- `Super + K` = keybind list
-- `Super + Enter` = terminal
+- `Super + K` keybind list
+- `Super + Enter` terminal
 
 The keybind list only shows documented keyboard binds. Mouse binds, submaps, and undocumented binds are not listed.
 
