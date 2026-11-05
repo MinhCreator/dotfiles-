@@ -27,11 +27,11 @@
     <linearGradient
        id="bg-gradient-2">
       <stop
-         style="stop-color:#797928;stop-opacity:1"
+         style="stop-color:#450b96;stop-opacity:1"
          offset="0"
          id="stop13402" />
       <stop
-         style="stop-color:#9f9f35;stop-opacity:1"
+         style="stop-color:#5b0ec6;stop-opacity:1"
          offset="1"
          id="stop13404" />
     </linearGradient>
@@ -57,11 +57,11 @@
     <linearGradient
        id="linearGradient888">
       <stop
-         style="stop-color:#c3c34f;stop-opacity:1"
+         style="stop-color:#7823ef;stop-opacity:1"
          offset="0"
          id="stop884" />
       <stop
-         style="stop-color:#aaaa88;stop-opacity:1"
+         style="stop-color:#9063cf;stop-opacity:1"
          offset="1"
          id="stop886" />
     </linearGradient>
@@ -161,7 +161,7 @@
        d="m 256,-84 -32,32 H 88 c 0,0 -40,0 -40,40 v 264 h 376 c 40,0 40,-40 40,-40 V -44 c 0,-40 -40,-40 -40,-40 z"
        id="path5792" />
     <path
-       style="font-variation-settings:normal;display:inline;opacity:1;fill:#c3c34f;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
+       style="font-variation-settings:normal;display:inline;opacity:1;fill:#7823ef;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
        d="m 480,1042 c 0,0 0,40 -40,40 l -375.998047,0.094 -0.0039,6 L 440,1088 c 40,0 40,-40 40,-40 z"
        transform="translate(-16,-836)"
        id="path5794" />
@@ -174,36 +174,36 @@
   <g
      id="surface105959-1"
      transform="matrix(3.4941816,0,0,3.4941816,134.02619,48.099307)"
-     style="fill:#81812b;fill-opacity:1;stroke:none;stroke-width:0.893536" />
+     style="fill:#4a0ca0;fill-opacity:1;stroke:none;stroke-width:0.893536" />
   <title
      id="title9167">Gnome Symbolic Icon Theme</title>
   <g
      transform="matrix(3.2,0,0,3.2,-1729.9825,575)"
-     style="display:inline;fill:#85852c;fill-opacity:1"
+     style="display:inline;fill:#4c0ca5;fill-opacity:1"
      id="layer1" />
   <g
      transform="matrix(3.2,0,0,3.2,-2501.1832,1749.4)"
-     style="display:inline;fill:#85852c;fill-opacity:1"
+     style="display:inline;fill:#4c0ca5;fill-opacity:1"
      id="layer9" />
   <g
      transform="matrix(3.2,0,0,3.2,-1729.9825,-65)"
      id="layer13"
-     style="fill:#85852c;fill-opacity:1" />
+     style="fill:#4c0ca5;fill-opacity:1" />
   <g
      transform="matrix(3.2,0,0,3.2,-1729.9825,575)"
-     style="display:inline;fill:#85852c;fill-opacity:1"
+     style="display:inline;fill:#4c0ca5;fill-opacity:1"
      id="g6387" />
   <g
      transform="matrix(3.2,0,0,3.2,-1729.9825,575)"
-     style="display:inline;fill:#85852c;fill-opacity:1"
+     style="display:inline;fill:#4c0ca5;fill-opacity:1"
      id="layer10" />
   <g
      transform="matrix(3.2,0,0,3.2,-1729.9825,575)"
      id="layer12"
-     style="fill:#85852c;fill-opacity:1" />
+     style="fill:#4c0ca5;fill-opacity:1" />
   <g
      transform="matrix(3.2,0,0,3.2,-1729.9825,575)"
-     style="display:inline;fill:#85852c;fill-opacity:1"
+     style="display:inline;fill:#4c0ca5;fill-opacity:1"
      id="layer11" />
   <metadata
      id="metadata1">
@@ -218,5 +218,5 @@
      d="m 64.000001,51.011499 c -13.23319,0 -24,10.757109 -24,24.006263 0,13.23663 10.76681,23.99374 24,23.99374 13.23316,0 24,-10.75711 24,-23.99374 0,-13.249153 -10.76684,-24.006263 -24,-24.006263 z m 0,6.324029 c 9.77778,0 17.66511,7.901905 17.66511,17.682233 0,9.767805 -7.88733,17.66971 -17.66511,17.66971 -9.77778,0 -17.66511,-7.901905 -17.66511,-17.66971 0,-9.780328 7.88733,-17.682233 17.66511,-17.682233 z m 9.64006,6.436733 c -0.1,0 -0.21281,0 -0.3255,0.02501 -0.31313,0.07514 -0.58844,0.250472 -0.80125,0.500913 l -8.51331,8.515522 -5.30829,-5.309679 c -0.35057,-0.576042 -1.00157,-0.864064 -1.6526,-0.75136 -0.66354,0.125221 -1.16432,0.638662 -1.2895,1.289852 -0.12532,0.651184 0.17531,1.314897 0.73865,1.665536 l 6.41002,6.411687 c 0.61344,0.576049 1.58997,0.576049 2.20345,0 l 9.61502,-9.617531 c 0.43819,-0.450822 0.57587,-1.127056 0.35053,-1.71563 -0.23781,-0.58857 -0.78872,-0.989301 -1.42722,-1.014348 z m 0,0"
      fill="#2e3436"
      id="path1-0"
-     style="fill:#85852c;fill-opacity:1;stroke-width:3.20542" />
+     style="fill:#4c0ca5;fill-opacity:1;stroke-width:3.20542" />
 </svg>

@@ -87,8 +87,6 @@ Singleton {
             Quickshell.execDetached(["touch", `${trim(colorsJsonFile)}`]);
             Quickshell.execDetached(["touch", `${trim(cacheJsonFile)}`]);
             Quickshell.execDetached(["touch", `${trim(qalcHistory)}`]);
-            Quickshell.execDetached(["touch", `${trim(calendarFile)}`]);
-            Quickshell.execDetached(["touch", `${trim(calendarLockFile)}`]);
 
             Quickshell.execDetached(["mkdir", "-p", `${trim(screenshotTempDir)}`]);
             Quickshell.execDetached(["mkdir", "-p", `${trim(bnclipDecodeTempDir)}`]);
