@@ -2,14 +2,14 @@
     <h1>BnSplit's dotfiles</h1>
 </div>
 
-https://github.com/user-attachments/assets/a6f72f9f-44ff-4d04-871c-307303bada15
+<https://github.com/user-attachments/assets/a6f72f9f-44ff-4d04-871c-307303bada15>
 
 ## Notable features
 
 - Quickshell: bar, launcher, control center, notifications, OSD, lock screen, and greeter
 - Launcher pages: apps, files, clipboard (via [bnclip](https://github.com/bnsplits/bnclip)), emoji, calculator, keybinds, monitors, processes, tasks, translate, wallpaper pickers, and web search
 - Wallpaper-driven theming via [bnchroma](https://github.com/bnsplits/bnchroma) + [awww](https://codeberg.org/LGFae/awww/pulls/571/files)
-- Lean GNOME integration: calendars events via Evolution Data Server, Control Center panels, Clocks, Nautilus's Set as Background...
+- Lean GNOME integration: calendars events via Evolution Data Server, Control Center additional settings, Nautilus's Set as Background...
 
 ## Installation
 
