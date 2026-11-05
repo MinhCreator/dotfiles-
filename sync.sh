@@ -29,7 +29,7 @@ while IFS= read -r line || [[ -n $line ]]; do
   fi
 done <"$dir/includes.txt"
 
-# greeter palette from the bundled default wallpaper
+# --- greeter palette from the bundled default wallpaper ---
 asset=$out/home/.config/quickshell/assets/default-wallpaper
 cfg=$out/home/.config/bnchroma/config.toml
 tpl=$out/home/.config/bnchroma/templates/quickshell.json
