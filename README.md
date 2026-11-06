@@ -4,8 +4,9 @@
 
 <https://github.com/user-attachments/assets/a6f72f9f-44ff-4d04-871c-307303bada15>
 
+
 > [!NOTE]
-> These are my personal dotfiles. `setup` handles the install, but not everything is guaranteed to work unmodified on another machine — some manual adjustments may be needed.
+> These are my personal dotfiles. `setup` handles the install, but not everything is guaranteed to work unmodified on another machine. Some manual adjustments may be needed.
 
 ## Notable features
 
