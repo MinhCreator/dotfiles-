@@ -17,11 +17,6 @@ StyledClippingRectangle {
     property bool isExpanded: false
     required property bool compactBar
 
-    property string hotAlign: "center"
-
-    readonly property real collapsedHotX: root.hotAlign === "left" ? root.x : root.hotAlign === "right" ? root.x + root.implicitWidth - root.baseWidth : root.x + (root.implicitWidth - root.baseWidth) / 2
-    readonly property real collapsedHotRight: root.collapsedHotX + root.baseWidth
-
     readonly property bool wantsExpanded: GlobalStates.expandedBarModule === root.name && !GlobalCache.loadLockScreen
     readonly property bool isAnimating: expandSequence.running || collapseSequence.running
     readonly property bool isCompactResting: compactBar && !collapseSequence.running && animY === 0

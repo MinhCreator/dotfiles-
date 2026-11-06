@@ -9,7 +9,6 @@ import "../../../lib/ColorUtils.js" as ColorUtils
 BarModule {
     id: root
     name: "workspaces"
-    hotAlign: "left"
     baseWidth: (workspaceIndicatorWidth * workspacesToShow) + (workspaceIndicatorSpacing * workspacesToShow) - workspaceIndicatorOuterGap
     enableClickToExpand: false
 

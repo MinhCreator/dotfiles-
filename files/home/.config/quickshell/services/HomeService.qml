@@ -162,8 +162,6 @@ Singleton {
             return GlobalSettings.enableRounding ? "Disable Rounded Corners" : "Enable Rounded Corners";
         case "toggle_compact_bar":
             return GlobalSettings.forceCompactBar ? "Disable Compact Bar" : "Enable Compact Bar";
-        case "toggle_bar_hot_row":
-            return GlobalSettings.enableBarHotRow ? "Disable Bar Hot Row" : "Enable Bar Hot Row";
         default:
             return def.name;
         }

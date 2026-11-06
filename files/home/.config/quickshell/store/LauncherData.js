@@ -50,7 +50,6 @@ const commands = [
 
     // --- Visual toggles: bar ---
     { id: "command.14", name: "Toggle Compact Bar", desc: "Always use the compact bar", icon: "toolbar", iconType: "material", actionType: "toggle_compact_bar" },
-    { id: "command.15", name: "Toggle Bar Hot Row", desc: "Toggle hover-to-expand hot zones on the bar", icon: "highlight_mouse_cursor", iconType: "material", actionType: "toggle_bar_hot_row" },
 
     // --- System: updates & backup ---
     { id: "command.16", name: "Update", desc: "Check and perform system updates", icon: "update", iconType: "material", actionType: "system_update", isUpdateCheck: true},

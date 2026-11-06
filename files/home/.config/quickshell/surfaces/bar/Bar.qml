@@ -149,73 +149,6 @@ Scope {
         }
 
         Item {
-            id: hotRow
-            visible: GlobalSettings.enableBarHotRow
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 1
-            z: 99
-
-            readonly property real leftMargin: contentRow.anchors.leftMargin
-            property double lastToggleAt: 0
-
-            function openModule(name) {
-                if (GlobalStates.expandedBarModule === name)
-                    GlobalStates.expandedBarModule = "";
-                else if (Date.now() - lastToggleAt < Theme.animations.duration.slower)
-                    return;
-                else
-                    GlobalStates.expandedBarModule = name;
-
-                lastToggleAt = Date.now();
-            }
-
-            HotStrip {
-                x: 0
-                width: workspacesModule.collapsedHotX + hotRow.leftMargin + workspacesModule.baseWidth + contentRow.gap / 2
-                onEntered: hotRow.openModule("workspaces")
-                visible: false
-            }
-
-            HotStrip {
-                x: resourcesModule.collapsedHotX + hotRow.leftMargin
-                width: resourcesModule.baseWidth
-                onEntered: hotRow.openModule("resources")
-            }
-
-            HotStrip {
-                x: dateTimeModule.collapsedHotX + hotRow.leftMargin
-                width: dateTimeModule.baseWidth
-                onEntered: hotRow.openModule("dateTime")
-            }
-
-            HotStrip {
-                x: controlCenterModule.collapsedHotX + hotRow.leftMargin
-                width: controlCenterModule.baseWidth
-                onEntered: hotRow.openModule("controlCenter")
-            }
-
-            HotStrip {
-                x: batteryModule.collapsedHotX + hotRow.leftMargin
-                width: parent.width - batteryModule.collapsedHotX - hotRow.leftMargin
-                onEntered: hotRow.openModule("battery")
-            }
-
-            HotStrip {
-                x: resourcesModule.collapsedHotRight + contentRow.gap / 2 + hotRow.leftMargin
-                width: Math.max(0, dateTimeModule.collapsedHotX - contentRow.gap / 2 - resourcesModule.collapsedHotRight)
-                onEntered: hotRow.openModule("mprisPlayers")
-            }
-
-            HotStrip {
-                x: dateTimeModule.collapsedHotRight + contentRow.gap / 2 + hotRow.leftMargin
-                width: Math.max(0, controlCenterModule.collapsedHotX - contentRow.gap / 2 - dateTimeModule.collapsedHotRight)
-                onEntered: hotRow.openModule("weather")
-            }
-        }
-
-        Item {
             id: contentRow
 
             readonly property int gap: 10
@@ -282,11 +215,5 @@ Scope {
                 compactBar: rootSurface.compactBar
             }
         }
-    }
-
-    component HotStrip: MouseArea {
-        height: parent.height
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
     }
 }

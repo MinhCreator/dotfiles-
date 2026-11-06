@@ -220,14 +220,6 @@ Singleton {
             return;
         }
 
-        if (def.actionType === "toggle_bar_hot_row") {
-            if (isPrimary)
-                GlobalStates.showLauncher = false;
-            GlobalSettings.enableBarHotRow = !GlobalSettings.enableBarHotRow;
-            GlobalIpc.popup.showInfo(`Bar Hot Row ${GlobalSettings.enableBarHotRow ? "Enabled" : "Disabled"}`, "", 1500);
-            return;
-        }
-
         if (def.actionType === "toggle_lockscreen_blur") {
             if (isPrimary)
                 GlobalStates.showLauncher = false;

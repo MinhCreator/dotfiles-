@@ -10,7 +10,6 @@ import qs.components
 BarModule {
     id: root
     name: "battery"
-    hotAlign: "right"
 
     baseWidth: Theme.sizes.barModuleBaseHeight + 12
     enableClickToExpand: !isExpanded

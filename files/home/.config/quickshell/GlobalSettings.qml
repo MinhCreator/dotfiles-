@@ -35,7 +35,6 @@ Singleton {
     property bool blurLockscreen: _jsonData.blurLockscreen ?? false
     property bool hideTopBar: _jsonData.hideTopBar ?? false
     property bool forceCompactBar: _jsonData.forceCompactBar ?? false
-    property bool enableBarHotRow: _jsonData.enableBarHotRow ?? true
     property bool doNotDisturb: _jsonData.doNotDisturb ?? false
     property bool hyprsunsetEnabled: _jsonData.hyprsunsetEnabled ?? false
     property bool hyprlandDPMS: _jsonData.hyprlandDPMS ?? true
