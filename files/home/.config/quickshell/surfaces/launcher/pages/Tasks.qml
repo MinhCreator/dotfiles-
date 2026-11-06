@@ -112,7 +112,7 @@ BasePage {
             submitTaskSheet();
             return;
         }
-        if (root.focusedTask) {
+        if (root.focusedTask && !root.focusedTask.is_local) {
             TasksService.openTaskInBrowser(root.focusedTask.id);
             GlobalStates.showLauncher = false;
         }
