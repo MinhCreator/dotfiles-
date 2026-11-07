@@ -2,7 +2,7 @@
     <h1>BnSplit's dotfiles</h1>
 </div>
 
-<https://github.com/user-attachments/assets/a6f72f9f-44ff-4d04-871c-307303bada15>
+https://github.com/user-attachments/assets/f3fd43bb-1a19-442a-9920-9c2a3e5ce66b
 
 > [!NOTE]
 > These are my personal dotfiles. `setup` handles the install, but not everything is guaranteed to work unmodified on another machine. Some manual adjustments may be needed.
