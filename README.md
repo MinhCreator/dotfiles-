@@ -4,6 +4,15 @@
 
 https://github.com/user-attachments/assets/f3fd43bb-1a19-442a-9920-9c2a3e5ce66b
 
+## Screenshots
+
+<div align="center">
+    <img src="assets/screenshot-1.png" alt="" width="49%">
+    <img src="assets/screenshot-2.png" alt="" width="49%">
+    <img src="assets/screenshot-3.png" alt="" width="49%">
+    <img src="assets/screenshot-4.png" alt="" width="49%">
+</div>
+
 > [!NOTE]
 > These are my personal dotfiles. `setup` handles the install, but not everything is guaranteed to work unmodified on another machine. Some manual adjustments may be needed.
 
@@ -40,12 +49,3 @@ The keybind list only shows documented keyboard binds. Mouse binds, submaps, and
 | [Hyprland](https://hyprland.org/)     | Wayland compositor                                                                 |
 | [Quickshell](https://quickshell.org/) | QtQuick desktop shell: bar, launcher, OSD, notifications, lock screen, and greeter |
 | Others                                | See [`setup`](setup) for the full package list                                     |
-
-## Screenshots
-
-<div align="center">
-    <img src="assets/screenshot-1.png" alt="" width="49%">
-    <img src="assets/screenshot-2.png" alt="" width="49%">
-    <img src="assets/screenshot-3.png" alt="" width="49%">
-    <img src="assets/screenshot-4.png" alt="" width="49%">
-</div>
