@@ -62,7 +62,7 @@ refresh_colors() {
   "$SCRIPT_DIR/recolor-adwaita" "$MAIN_COLOR"
 
   gsettings set org.gnome.desktop.interface gtk-theme ""
-  gsettings set org.gnome.desktop.interface gtk-theme "custom-adw"
+  gsettings set org.gnome.desktop.interface gtk-theme "bn-adw"
 
   gsettings set org.gnome.desktop.interface icon-theme "Adwaita"
   gsettings set org.gnome.desktop.interface icon-theme "bn-adwaita"

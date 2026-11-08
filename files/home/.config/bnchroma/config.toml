@@ -47,13 +47,13 @@ output = "~/.config/wezterm/colors.lua"
 [[templates]]
 name = "gtk-solid"
 template = "~/.config/bnchroma/templates/gtk-solid.css"
-output = ["~/.themes/custom-adw/gtk-3.0/colors-solid.css", "~/.themes/custom-adw/gtk-4.0/colors-solid.css"]
+output = ["~/.themes/bn-adw/gtk-3.0/colors-solid.css", "~/.themes/bn-adw/gtk-4.0/colors-solid.css"]
 
 [[templates]]
 name = "gtk-xray"
 template = "~/.config/bnchroma/templates/gtk-xray.css"
-output = ["~/.themes/custom-adw/gtk-3.0/colors-xray.css", "~/.themes/custom-adw/gtk-4.0/colors-xray.css"]
-command = "dconf write /org/gnome/desktop/interface/gtk-theme \"''\"; sleep 0.05; dconf write /org/gnome/desktop/interface/gtk-theme \"'custom-adw'\""
+output = ["~/.themes/bn-adw/gtk-3.0/colors-xray.css", "~/.themes/bn-adw/gtk-4.0/colors-xray.css"]
+command = "dconf write /org/gnome/desktop/interface/gtk-theme \"''\"; sleep 0.05; dconf write /org/gnome/desktop/interface/gtk-theme \"'bn-adw'\""
 
 [[templates]]
 name = "obsidian"

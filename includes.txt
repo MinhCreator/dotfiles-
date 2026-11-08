@@ -29,13 +29,12 @@
 ~/.config/bnchroma/
 ~/.config/kitty/
 ~/.config/ghostty/
-~/.config/wezterm/
 ~/.config/gtk-3.0/
 ~/.config/gtk-4.0/
 ~/.config/cava/
 
 # Theming / fonts
-~/.themes/custom-adw
+~/.themes/bn-adw/
 ~/.icons/bn-adwaita/
 ~/.fonts/
 /usr/share/fonts/Outfit/

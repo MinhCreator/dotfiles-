@@ -32,8 +32,8 @@ hl.env("XDG_MENU_PREFIX", "arch-") -- Dolphin 'open with' popup fix
 hl.env("XCURSOR_SIZE", "24")
 hl.env("BROWSER", "zen-browser")
 hl.env("_CHROMIUM_USE_WAYLAND", "1")
-hl.env("GTK_THEME", "custom-adw")
-hl.env("GTK_THEME", "custom-adw", true)
+hl.env("GTK_THEME", "bn-adw")
+hl.env("GTK_THEME", "bn-adw", true)
 
 -- create an empty secrets.lua on first run so the require below never fails
 local secrets_path = HOME .. "/.config/hypr/hyprland/lua/secrets.lua"
