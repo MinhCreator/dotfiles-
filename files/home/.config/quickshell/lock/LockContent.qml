@@ -325,7 +325,7 @@ WlSessionLock {
                             TextInput {
                                 id: passwordInput
                                 anchors.fill: parent
-                                anchors.margins: 4
+                                anchors.margins: 8
                                 color: Theme.colors.white
                                 font.family: Theme.fontFamilies.main
                                 font.pixelSize: Theme.fontPixelSizes.larger
@@ -340,8 +340,8 @@ WlSessionLock {
                                 opacity: (LockService.isAuthenticating || !LockService.showUI || text.length === 0) ? 0 : 1
                                 selectedTextColor: Theme.colors.textPrimary
                                 selectionColor: ColorUtils.transparentize(Theme.colors.white, 0.15)
-                                leftPadding: 8
-                                rightPadding: 8
+                                leftPadding: 0
+                                rightPadding: 0
 
                                 Keys.onPressed: event => {
                                     if (event.key === Qt.Key_Escape && !LockService.lockInput)
