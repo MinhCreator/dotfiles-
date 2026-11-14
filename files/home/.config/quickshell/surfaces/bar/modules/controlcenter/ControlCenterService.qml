@@ -243,7 +243,7 @@ Singleton {
         case "screen":
             return true;
         case "notifications":
-            return !GlobalSettings.doNotDisturb;
+            return true;
         case "update":
             return UpdateService.updateCount > 0;
         case "systray":
