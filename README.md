@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/f3fd43bb-1a19-442a-9920-9c2a3e5ce66b
 ## Notable features
 
 - Quickshell: bar, launcher, control center, notifications, OSD, lock screen, and greeter
-- Launcher pages: apps, files, clipboard (via [bnclip](https://github.com/bnsplits/bnclip)), emoji, calculator, keybinds, monitors, processes, tasks, translate, wallpaper pickers, and web search
+- Launcher pages: apps, files, clipboard (via [bnclip](https://github.com/bnsplits/bnclip)), emojis, calculator, keybinds, monitors, processes, tasks, translate, commands, web search, and wallpaper pickers (local, Wallhaven, Unsplash)
 - Wallpaper-driven theming via [bnchroma](https://github.com/bnsplits/bnchroma) + [awww](https://codeberg.org/LGFae/awww/pulls/571/files)
 - Lean GNOME integration: calendars events via Evolution Data Server, Control Center additional settings, Nautilus's Set as Background...
 
