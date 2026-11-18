@@ -24,11 +24,11 @@
     <linearGradient
        id="bg-gradient-2">
       <stop
-         style="stop-color:#45565b;stop-opacity:1"
+         style="stop-color:#9d7203;stop-opacity:1"
          offset="0"
          id="stop13402" />
       <stop
-         style="stop-color:#5b7278;stop-opacity:1"
+         style="stop-color:#cf9604;stop-opacity:1"
          offset="1"
          id="stop13404" />
     </linearGradient>
@@ -54,11 +54,11 @@
     <linearGradient
        id="linearGradient888">
       <stop
-         style="stop-color:#799298;stop-opacity:1"
+         style="stop-color:#faba17;stop-opacity:1"
          offset="0"
          id="stop884" />
       <stop
-         style="stop-color:#989898;stop-opacity:1"
+         style="stop-color:#d9b558;stop-opacity:1"
          offset="1"
          id="stop886" />
     </linearGradient>
@@ -158,7 +158,7 @@
        d="m 256,-84 -32,32 H 88 c 0,0 -40,0 -40,40 v 264 h 376 c 40,0 40,-40 40,-40 V -44 c 0,-40 -40,-40 -40,-40 z"
        id="path5792" />
     <path
-       style="font-variation-settings:normal;display:inline;opacity:1;fill:#799298;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
+       style="font-variation-settings:normal;display:inline;opacity:1;fill:#faba17;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
        d="m 480,1042 c 0,0 0,40 -40,40 l -375.998047,0.094 -0.0039,6 L 440,1088 c 40,0 40,-40 40,-40 z"
        transform="translate(-16,-836)"
        id="path5794" />
@@ -171,7 +171,7 @@
   <g
      id="surface105959-1"
      transform="matrix(3.4941816,0,0,3.4941816,134.02619,48.099307)"
-     style="fill:#4a5c61;fill-opacity:1;stroke:none;stroke-width:0.893536" />
+     style="fill:#a87903;fill-opacity:1;stroke:none;stroke-width:0.893536" />
   <g
      id="g5337"
      transform="matrix(1.5,0,0,1.5,-141.85827,-47.457402)">
@@ -179,21 +179,21 @@
        d="m 127.80341,65.805775 -9.43463,5.999989 9.43463,5.999991 9.43621,-5.999991 9.43471,5.999991 9.43458,-5.999991 -9.43458,-5.999989 -9.43471,5.999989 z"
        fill="#f7f5f2"
        id="path2332"
-       style="fill:#4c5f64;fill-opacity:1;stroke-width:1.30633" />
+       style="fill:#ad7d03;fill-opacity:1;stroke-width:1.30633" />
     <path
        d="m 127.80341,89.805934 -9.43463,-6.000109 9.43463,-6.00007 9.43621,6.00007 z"
        fill="#f7f5f2"
        id="path2334"
-       style="fill:#4c5f64;fill-opacity:1;stroke-width:1.30633" />
+       style="fill:#ad7d03;fill-opacity:1;stroke-width:1.30633" />
     <path
        d="m 137.23962,83.805825 9.43471,-6.00007 9.43458,6.00007 -9.43458,6.000109 z"
        fill="#f7f5f2"
        id="path2336"
-       style="fill:#4c5f64;fill-opacity:1;stroke-width:1.30633" />
+       style="fill:#ad7d03;fill-opacity:1;stroke-width:1.30633" />
     <path
        d="m 137.23962,97.805774 -9.43619,-5.999978 9.43619,-5.999978 9.43471,5.999978 z"
        fill="#f7f5f2"
        id="path2338"
-       style="fill:#4c5f64;fill-opacity:1;stroke-width:1.30633" />
+       style="fill:#ad7d03;fill-opacity:1;stroke-width:1.30633" />
   </g>
 </svg>

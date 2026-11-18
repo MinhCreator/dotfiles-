@@ -24,11 +24,11 @@
     <linearGradient
        id="bg-gradient-2">
       <stop
-         style="stop-color:#45565b;stop-opacity:1"
+         style="stop-color:#9d7203;stop-opacity:1"
          offset="0"
          id="stop13402" />
       <stop
-         style="stop-color:#5b7278;stop-opacity:1"
+         style="stop-color:#cf9604;stop-opacity:1"
          offset="1"
          id="stop13404" />
     </linearGradient>
@@ -54,11 +54,11 @@
     <linearGradient
        id="linearGradient888">
       <stop
-         style="stop-color:#799298;stop-opacity:1"
+         style="stop-color:#faba17;stop-opacity:1"
          offset="0"
          id="stop884" />
       <stop
-         style="stop-color:#989898;stop-opacity:1"
+         style="stop-color:#d9b558;stop-opacity:1"
          offset="1"
          id="stop886" />
     </linearGradient>
@@ -158,7 +158,7 @@
        d="m 256,-84 -32,32 H 88 c 0,0 -40,0 -40,40 v 264 h 376 c 40,0 40,-40 40,-40 V -44 c 0,-40 -40,-40 -40,-40 z"
        id="path5792" />
     <path
-       style="font-variation-settings:normal;display:inline;opacity:1;fill:#799298;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
+       style="font-variation-settings:normal;display:inline;opacity:1;fill:#faba17;fill-opacity:1;stroke:none;stroke-width:26.0669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000;stop-opacity:1"
        d="m 480,1042 c 0,0 0,40 -40,40 l -375.998047,0.094 -0.0039,6 L 440,1088 c 40,0 40,-40 40,-40 z"
        transform="translate(-16,-836)"
        id="path5794" />
@@ -171,10 +171,10 @@
   <g
      id="surface105959-1"
      transform="matrix(3.4941816,0,0,3.4941816,134.02619,48.099307)"
-     style="fill:#4a5c61;fill-opacity:1;stroke:none;stroke-width:0.893536" />
+     style="fill:#a87903;fill-opacity:1;stroke:none;stroke-width:0.893536" />
   <path
      class="cls-1"
      d="m 93.418995,70.733387 c -1.4909,-1.003585 -5.40874,-1.4322 -8.25705,-0.665036 -0.15361,-2.837058 -1.61635,-5.227809 -4.29258,-7.313786 l -0.99072,-0.665037 -0.66021,0.997152 c -1.2979,1.97018 -1.84473,4.59494 -1.65093,6.980867 0.15278,1.469994 0.66423,3.12253 1.65093,4.321529 -3.70716,2.150308 -7.124,1.662183 -22.25659,1.662183 h -23.36391 c -0.0683,3.416855 0.48089,9.990014 4.66088,15.340865 0.46159,0.59105 0.9682,1.1628 1.51744,1.71365 3.39836,3.40319 8.53289,5.89847 16.21096,5.90571 11.71331,0.0106 21.74917,-6.32066 27.8535,-21.629347 2.00878,0.03296 7.31138,0.360261 9.90638,-4.654449 0.0636,-0.08443 0.66021,-1.33007 0.66021,-1.33007 l -0.98911,-0.665037 z m -44.57348,-3.124946 h -6.56994 v 6.569948 h 6.56994 z m 8.48785,0 h -6.56994 v 6.569948 h 6.56994 z m 8.48785,0 h -6.56995 v 6.569948 h 6.56995 z m 8.48786,0 h -6.56995 v 6.569948 h 6.56995 z m -33.95142,0 h -6.56994 v 6.569948 h 6.56994 z m 8.48786,-8.298071 h -6.56994 v 6.569944 h 6.56994 z m 8.48785,0 h -6.56994 v 6.569944 h 6.56994 z m 8.48785,0 h -6.56995 v 6.569944 h 6.56995 z m 0,-8.298876 h -6.56995 v 6.569943 h 6.56995 z"
      id="path1"
-     style="fill:#4c5f64;fill-opacity:1;stroke-width:0px" />
+     style="fill:#ad7d03;fill-opacity:1;stroke-width:0px" />
 </svg>

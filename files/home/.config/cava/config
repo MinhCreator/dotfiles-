@@ -240,14 +240,14 @@
 ; gradient_color_8 = '#cc3333'
 
 gradient = 1
-gradient_color_1 = '#3F4E53'
-gradient_color_2 = '#4D6066'
-gradient_color_3 = '#5B7278'
-gradient_color_4 = '#6A848B'
-gradient_color_5 = '#7B949B'
-gradient_color_6 = '#8EA3A9'
-gradient_color_7 = '#A1B3B8'
-gradient_color_8 = '#B4C2C6'
+gradient_color_1 = '#8E6703'
+gradient_color_2 = '#AF7F04'
+gradient_color_3 = '#CF9604'
+gradient_color_4 = '#F0AE05'
+gradient_color_5 = '#FABB1C'
+gradient_color_6 = '#FBC53C'
+gradient_color_7 = '#FCCF5D'
+gradient_color_8 = '#FCD87D'
 
 
 [smoothing]
