@@ -24,11 +24,11 @@
     <linearGradient
        id="bg-gradient-2">
       <stop
-         style="stop-color:#515050;stop-opacity:1"
+         style="stop-color:#45565b;stop-opacity:1"
          offset="0"
          id="stop13402" />
       <stop
-         style="stop-color:#6a6a6a;stop-opacity:1"
+         style="stop-color:#5b7278;stop-opacity:1"
          offset="1"
          id="stop13404" />
     </linearGradient>
@@ -54,11 +54,11 @@
     <linearGradient
        id="linearGradient888">
       <stop
-         style="stop-color:#898989;stop-opacity:1"
+         style="stop-color:#799298;stop-opacity:1"
          offset="0"
          id="stop884" />
       <stop
-         style="stop-color:#999999;stop-opacity:1"
+         style="stop-color:#989898;stop-opacity:1"
          offset="1"
          id="stop886" />
     </linearGradient>
@@ -157,7 +157,7 @@
      d="m 64.004415,31.337228 -8.037168,8.037168 H 21.809283 c 0,0 -10.04646,0 -10.04646,10.04646 v 66.306634 h 94.436727 c 10.04646,0 10.04646,-10.04646 10.04646,-10.04646 V 41.383688 c 0,-10.04646 -10.04646,-10.04646 -10.04646,-10.04646 z"
      id="path5792" />
   <path
-     style="font-variation-settings:normal;display:inline;fill:#898989;fill-opacity:1;stroke:none;stroke-width:6.547;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000"
+     style="font-variation-settings:normal;display:inline;fill:#799298;fill-opacity:1;stroke:none;stroke-width:6.547;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;paint-order:normal;enable-background:new;stop-color:#000000"
      d="m 116.24601,104.17406 c 0,0 0,10.04646 -10.04646,10.04646 l -94.436237,0.0236 -9.8e-4,1.50697 94.437217,-0.0236 c 10.04646,0 10.04646,-10.04646 10.04646,-10.04646 z"
      id="path5794" />
   <path
@@ -167,10 +167,10 @@
   <g
      id="surface105959-1"
      transform="matrix(3.4941816,0,0,3.4941816,134.02619,48.099307)"
-     style="fill:#565656;fill-opacity:1;stroke:none;stroke-width:0.893536" />
+     style="fill:#4a5c61;fill-opacity:1;stroke:none;stroke-width:0.893536" />
   <path
      class="cls-1"
      d="m 88.314898,70.422838 -0.07071,-0.180694 -6.845037,-17.864163 a 1.783274,1.783274 0 0 0 -0.70441,-0.848432 1.8330276,1.8330276 0 0 0 -2.094895,0.112603 1.8330276,1.8330276 0 0 0 -0.607519,0.921751 l -4.62183,14.140499 H 54.655285 L 50.033424,52.563903 a 1.796367,1.796367 0 0 0 -0.607519,-0.924369 1.8330276,1.8330276 0 0 0 -2.094894,-0.112602 1.7989857,1.7989857 0 0 0 -0.70441,0.848431 l -6.85813,17.856304 -0.06809,0.180695 a 12.710736,12.710736 0 0 0 4.215956,14.690409 l 0.0224,0.01856 0.06272,0.04451 10.427306,7.8087 5.158664,3.904351 3.142325,2.372374 a 2.1132189,2.1132189 0 0 0 2.555766,0 l 3.142357,-2.372463 5.158664,-3.904348 10.49015,-7.855837 0.0256,-0.0208 A 12.715974,12.715974 0 0 0 88.313005,70.42312 Z"
      id="path1-6-6"
-     style="fill:#595858;fill-opacity:1;stroke-width:0.261861" />
+     style="fill:#4c5f64;fill-opacity:1;stroke-width:0.261861" />
 </svg>
