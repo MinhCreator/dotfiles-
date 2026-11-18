@@ -130,6 +130,14 @@ PanelWindow {
                 if (root.currentPage)
                     root.currentPage.upItem();
                 event.accepted = true;
+            } else if (event.key === Qt.Key_Right) {
+                if (root.currentPage)
+                    root.currentPage.rightItem();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Left) {
+                if (root.currentPage)
+                    root.currentPage.leftItem();
+                event.accepted = true;
             } else if (event.modifiers & Qt.ControlModifier) {
                 if (root.currentPage) {
                     if (event.key === Qt.Key_H) {
